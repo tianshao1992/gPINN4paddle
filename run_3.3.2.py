@@ -23,7 +23,7 @@ pi = np.pi
 
 
 def get_args():
-    parser = argparse.ArgumentParser('PINNs for Brinkman-Forchheimer model', add_help=False)
+    parser = argparse.ArgumentParser('PINNs for Brinkman-Forchheimer inverse par2', add_help=False)
     parser.add_argument('-f', type=str, default="读取额外的参数")
     parser.add_argument('--net_type', default='gpinn', type=str)
     parser.add_argument('--epochs_adam', default=60000, type=int)
@@ -33,7 +33,7 @@ def get_args():
     parser.add_argument('--work_name', default='', type=str, help="save_path")
 
     parser.add_argument('--Nx_EQs', default=30, type=int)
-    parser.add_argument('--Nx_Sup', default=5, type=int)
+    parser.add_argument('--Nx_Sup', default=8, type=int)
     parser.add_argument('--Nx_Val', default=500, type=int)
     parser.add_argument('--g_weight', default=0.1, type=float)
     return parser.parse_args()
@@ -45,24 +45,31 @@ class Net_single(DeepModel_single):
         self.v_e = self.create_parameter(shape=[1, ], dtype='float32', is_bias=False,
                                          default_initializer=nn.initializer.Constant(0.0))
         self.add_parameter("v_e", self.v_e)
+        self.K = self.create_parameter(shape=[1, ], dtype='float32', is_bias=False,
+                                         default_initializer=nn.initializer.Constant(0.0))
+        self.add_parameter("K", self.K)
 
     def out_transform(self, inn_var, out_var):
         return paddle.tanh(inn_var) * paddle.tanh(1 - inn_var) * out_var
 
     @property
-    def get_parameter(self):
+    def get_v_e(self):
         return paddle.log(paddle.exp(self.v_e) + 1) * 0.1
+
+    @property
+    def get_K(self):
+        return paddle.log(paddle.exp(self.K) + 1) * 0.1
 
     def equation(self, inn_var):
         out_var = self.forward(inn_var)
         out_var = self.out_transform(inn_var, out_var)
         dudx = paddle.incubate.autograd.grad(out_var, inn_var)
         d2udx2 = paddle.incubate.autograd.grad(dudx, inn_var)
-        # v_e = paddle.log(paddle.exp(self.v_e) + 1) * 0.1 #self.get_parameter #float(np.log(np.exp(1e-3)) + 1) * 0.1
-        eqs = - 1 / e * d2udx2 * self.get_parameter + v * out_var / K - g
-        if opts.net_type == 'gpinn':
+
+        eqs = -1 / e * d2udx2 * self.get_v_e + v * out_var / self.get_K - g
+        if opts.net_type == 'pinn':
             d3udx3 = paddle.incubate.autograd.grad(d2udx2, inn_var)
-            g_eqs = -1 / e * d3udx3 * self.get_parameter + v / K * dudx
+            g_eqs = -1 / e * d3udx3 * self.get_v_e + v * dudx / self.get_K
         else:
             g_eqs = paddle.zeros((1,), dtype=paddle.float32)
 
@@ -202,20 +209,21 @@ if __name__ == '__main__':
         if epoch > 0 and epoch % opts.print_freq == 0:
             all_items = exe.run(prog, feed={'EQs_var': train_x, 'BCs_var': bcs_x, 'BCs_tar': bcs_u, 'Sup_var': sup_x,
                                             'Sup_tar': sup_u, 'Val_var': valid_x, 'Val_tar': valid_u},
-                                fetch_list=[[U_pred, U_grad, Net_model.get_parameter] + Loss[:-1]])
+                                fetch_list=[[U_pred, U_grad, Net_model.get_v_e, Net_model.get_K] + Loss[:-1]])
 
             u_pred = all_items[0]
             u_grad = all_items[1]
-            p_pred = all_items[2]
-            loss_items = all_items[3:]
+            v_e_pred = all_items[2]
+            K_pred = all_items[3]
+            loss_items = all_items[4:]
 
             log_loss.append(np.array(loss_items).squeeze())
-            par_pred.append(np.array(p_pred))
+            par_pred.append(np.array([v_e_pred, K_pred]))
             # print(loss_items[1:])
 
-            print('iter: {:6d}, lr: {:.1e}, cost: {:.2f}, val_loss: {:.2e}, v_e_pred: {:.2e}\n'
+            print('iter: {:6d}, lr: {:.1e}, cost: {:.2f}, val_loss: {:.2e}, v_e_pred: {:.2e}, K_pred: {:.2e}\n'
                   'EQs_loss: {:.2e}, BCS_loss: {:.2e}, Sup_loss: {:.2e}, Grad_loss: {:.2e}'.
-                  format(epoch, 0.001, time.time() - star_time, float(loss_items[-1]), float(p_pred),
+                  format(epoch, 0.001, time.time() - star_time, float(loss_items[-1]), float(v_e_pred), float(K_pred),
                          float(loss_items[0]), float(loss_items[1]), float(loss_items[2]), float(loss_items[3])))
 
             # print(np.array(par_pred).shape)
@@ -232,10 +240,12 @@ if __name__ == '__main__':
 
             plt.figure(1, figsize=(20, 10))
             plt.clf()
-            Visual.plot_loss(np.arange(len(par_pred)), np.array(par_pred)[:, -1], 'v_e_pred')
+            plt.subplot(211)
+            Visual.plot_loss(np.arange(len(par_pred)), np.array(par_pred)[:, 0], 'v_e_pred')
+            Visual.plot_loss(np.arange(len(par_pred)), np.array(par_pred)[:, 1], 'K_pred')
             Visual.plot_loss(np.arange(len(par_pred)), np.ones(len(par_pred)) * 0.001, 'EXACT')
             plt.xlabel("Epoch")
-            plt.ylabel("v_e")
+            plt.ylabel("value")
             # Visual.plot_loss(np.arange(len(par_pred)), np.array(par_pred)[:, 0], 'eqs_loss')
             plt.savefig(os.path.join(tran_path, 'par_pred.svg'))
 
@@ -261,7 +271,7 @@ if __name__ == '__main__':
             paddle.save(prog.state_dict(), os.path.join(work_path, 'latest_model.pdparams'), )
             paddle.save({'log_loss': log_loss, 'par_pred': par_pred,
                          'valid_x': valid_x, 'valid_u': valid_u, 'valid_g': valid_g,
-                         'u_pred': u_pred, 'u_grad': u_grad,
-                         }, os.path.join(work_path, 'out_res.pth'), )
+                         'u_pred': u_pred, 'u_grad': u_grad,},
+                         os.path.join(work_path, 'out_res.pth'), )
 
     shutil.copy(os.path.join(work_path, 'train.log'), tran_path)
