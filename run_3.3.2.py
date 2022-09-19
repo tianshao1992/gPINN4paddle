@@ -30,7 +30,7 @@ def get_args():
     parser.add_argument('--save_freq', default=2000, type=int, help="frequency to save model and image")
     parser.add_argument('--print_freq', default=2000, type=int, help="frequency to print loss")
     parser.add_argument('--device', default=0, type=int, help="time sampling in for boundary loss")
-    parser.add_argument('--work_name', default='', type=str, help="save_path")
+    parser.add_argument('--work_name', default='Brinkman-Forchheimer-2', type=str, help="save_path")
 
     parser.add_argument('--Nx_EQs', default=30, type=int)
     parser.add_argument('--Nx_Sup', default=8, type=int)
@@ -167,9 +167,9 @@ if __name__ == '__main__':
     paddle.enable_static()
 
     # opts.Nx_EQs = N
-    work_name = 'brinkman_forchheimer_1-' + opts.net_type + '-N_' + str(opts.Nx_EQs) + opts.work_name
-    work_path = os.path.join('work', work_name)
-    tran_path = os.path.join('work', work_name, 'train')
+    save_path = opts.net_type + '-Nx_EQs_' + str(opts.Nx_EQs)
+    work_path = os.path.join('work', opts.work_name, save_path)
+    tran_path = os.path.join('work', opts.work_name, save_path, 'train')
     isCreated = os.path.exists(tran_path)
     if not isCreated:
         os.makedirs(tran_path)
