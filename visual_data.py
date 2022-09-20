@@ -37,7 +37,7 @@ class matplotlib_vision(object):
         gs.update(top=0.95, bottom=0.07, left=0.1, right=0.9, wspace=0.5, hspace=0.7)
         gs_dict = {key: value for key, value in gs.__dict__.items() if key in gs._AllowedKeys}
         self.fig, self.axes = plt.subplots(len(self.field_name), 3, gridspec_kw=gs_dict, num=100, figsize=(30, 20))
-        self.font = {'family': 'Times New Roman', 'weight': 'normal', 'size': 30}
+        self.font = {'weight': 'normal', 'size': 30}
 
     def plot_loss(self, x, y, label, title=None, color=None):
         # sbn.set_style('ticks')
@@ -49,8 +49,8 @@ class matplotlib_vision(object):
         plt.legend(loc="upper right", prop=self.font)
         plt.xlabel('iterations', self.font)
         plt.ylabel('loss value', self.font)
-        plt.yticks(fontproperties='Times New Roman', size=self.font["size"])
-        plt.xticks(fontproperties='Times New Roman', size=self.font["size"])
+        plt.yticks(size=self.font["size"])
+        plt.xticks(size=self.font["size"])
         plt.title(title, self.font)
         # plt.pause(0.001)
 
@@ -63,8 +63,8 @@ class matplotlib_vision(object):
         plt.legend(loc="upper right", prop=self.font)
         plt.xlabel('iterations', self.font)
         plt.ylabel('pred value', self.font)
-        plt.yticks(fontproperties='Times New Roman', size=self.font["size"])
-        plt.xticks(fontproperties='Times New Roman', size=self.font["size"])
+        plt.yticks(size=self.font["size"])
+        plt.xticks(size=self.font["size"])
         plt.title(title, self.font)
         # plt.pause(0.001)
 
@@ -76,8 +76,8 @@ class matplotlib_vision(object):
 
         plt.ylabel('target value', self.font)
         plt.xlabel('samples', self.font)
-        plt.xticks(fontproperties='Times New Roman', size=25)
-        plt.yticks(fontproperties='Times New Roman', size=25)
+        plt.xticks(size=25)
+        plt.yticks(size=25)
         plt.grid(True)  # 添加网格
         plt.title(title, self.font)
 
@@ -112,13 +112,13 @@ class matplotlib_vision(object):
             if cmin_max is not None:
                 plt.axis((cmin[0], cmax[0], cmin[1], cmax[1]))
             ########      Exact f(t,x,y)     ###########
-            plt.subplot(3, Num_fields, 0 * Num_fields + fi + 1)
+            plt.subplot(Num_fields, 3, fi * Num_fields + 1)
             levels = np.arange(out_true.min(), out_true.max(), 0.05)
             plt.tricontourf(triObj, out_true[:, fi], Num_levels, cmap=cmap)
             plt.clim(vmin=fmin[fi], vmax=fmax[fi])
             cb = plt.colorbar()
             cb.ax.tick_params(labelsize=20)  # 设置色标刻度字体大小
-            plt.rcParams['font.family'] = 'Times New Roman'
+            # plt.rcParams['font.family'] = 'Times New Roman'
             # cb.set_label('value', rotation=0, fontdict=self.font, y=1.08)
             plt.rcParams['font.size'] = 20
             # plt.xlabel('$x$', fontdict=self.font)
@@ -128,7 +128,7 @@ class matplotlib_vision(object):
             if cmin_max is not None:
                 plt.axis((cmin[0], cmax[0], cmin[1], cmax[1]))
             ########     Learned f(t,x,y)     ###########
-            plt.subplot(3, Num_fields, 1 * Num_fields + fi + 1)
+            plt.subplot(Num_fields, 3, fi * Num_fields + 2)
             # levels = np.arange(out_true.min(), out_true.max(), 0.05)
             plt.tricontourf(triObj, out_pred[:, fi], Num_levels, cmap=cmap)
             cb = plt.colorbar()
@@ -142,7 +142,7 @@ class matplotlib_vision(object):
             if cmin_max is not None:
                 plt.axis((cmin[0], cmax[0], cmin[1], cmax[1]))
             ########     Error f(t,x,y)     ###########
-            plt.subplot(3, Num_fields, 2 * Num_fields + fi + 1)
+            plt.subplot(Num_fields, 3, fi * Num_fields + 3)
             err = out_pred[:, fi] - out_true[:, fi]
             plt.tricontourf(triObj, err, Num_levels, cmap='coolwarm')
             cb = plt.colorbar()
@@ -177,7 +177,7 @@ class matplotlib_vision(object):
             plt.rcParams['font.size'] = 20
 
             ########      Exact f(t,x,y)     ###########
-            plt.subplot(3, Num_fields, 0 * Num_fields + fi + 1)
+            plt.subplot(Num_fields, 3, fi * Num_fields + 1)
             # plt.axis('equal')
             f_true = out_true[:, :, fi]
             plt.pcolormesh(x_pos, y_pos, f_true, cmap='RdYlBu_r', shading='gouraud', antialiased=True, snap=True)
@@ -191,7 +191,7 @@ class matplotlib_vision(object):
             tick_locator = ticker.MaxNLocator(nbins=3)  # colorbar上的刻度值个数
             cb.locator = tick_locator
             cb.update_ticks()
-            plt.rcParams['font.family'] = 'Times New Roman'
+            # plt.rcParams['font.family'] = 'Times New Roman'
             # cb.set_label('value', rotation=0, fontdict=self.font, y=1.08)
             plt.rcParams['font.size'] = 20
             # plt.xlabel('$x$', fontdict=self.font)
@@ -199,7 +199,7 @@ class matplotlib_vision(object):
             plt.title('Original field $' + field_name[fi] + '$' + '', fontdict=self.font)
 
             ########     Learned f(t,x,y)     ###########
-            plt.subplot(3, Num_fields, 1 * Num_fields + fi + 1)
+            plt.subplot(Num_fields, 3, fi * Num_fields + 2)
             # plt.axis('equal')
             f_pred = out_pred[:, :, fi]
             plt.pcolormesh(x_pos, y_pos, f_pred, cmap='RdYlBu_r', shading='gouraud', antialiased=True, snap=True)
@@ -218,7 +218,7 @@ class matplotlib_vision(object):
             plt.title('Predicted field $' + field_name[fi] + '$' + '', fontdict=self.font)
 
             ########     Error f(t,x,y)     ###########
-            plt.subplot(3, Num_fields, 2 * Num_fields + fi + 1)
+            plt.subplot(Num_fields, 3, fi * Num_fields + 3)
             # plt.axis('equal')
             err = f_true - f_pred
             plt.pcolormesh(x_pos, y_pos, err, cmap='coolwarm', shading='gouraud', antialiased=True, snap=True)

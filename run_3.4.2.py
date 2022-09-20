@@ -19,15 +19,16 @@ import paddle.static as static
 import visual_data
 from basic_model_pdpd import DeepModel_single
 from SALib.sample import sobol_sequence
+
 # os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 pi = np.pi
 
 
 def get_args():
-    parser = argparse.ArgumentParser('PINNs for Burgers1', add_help=False)
+    parser = argparse.ArgumentParser('PINNs for Burgers2', add_help=False)
     parser.add_argument('-f', type=str, default="external")
     parser.add_argument('--net_type', default='pinn_rar', type=str)
-    parser.add_argument('--epochs_adam', default=20000, type=int)
+    parser.add_argument('--epochs_adam', default=20001, type=int)
     parser.add_argument('--save_freq', default=1000, type=int, help="frequency to save model and image")
     parser.add_argument('--print_freq', default=200, type=int, help="frequency to print loss")
     parser.add_argument('--device', default=0, type=int, help="time sampling in for boundary loss")
@@ -36,6 +37,8 @@ def get_args():
     parser.add_argument('--Nx_EQs', default=1500, type=int)
     parser.add_argument('--Nt_Val', default=100, type=int)
     parser.add_argument('--Nx_Val', default=256, type=int)
+    parser.add_argument('--Nx_Add', default=100000, type=int)
+    parser.add_argument('--samp_ids', default=0, type=int)
     parser.add_argument('--g_weight', default=0.0001, type=float)
     return parser.parse_args()
 
@@ -44,8 +47,8 @@ class Net_single(DeepModel_single):
     def __init__(self, planes, active):
         super(Net_single, self).__init__(planes, active=active, data_norm=[0, 0])
 
-        self.pick_1 = paddle.to_tensor([[1, 0],], dtype=paddle.float32).T
-        self.pick_2 = paddle.to_tensor([[0, 1],], dtype=paddle.float32).T
+        self.pick_1 = paddle.to_tensor([[1, 0], ], dtype=paddle.float32).T
+        self.pick_2 = paddle.to_tensor([[0, 1], ], dtype=paddle.float32).T
 
     def out_transform(self, inn_var, out_var):
         x_in = paddle.matmul(inn_var, self.pick_1)
@@ -61,7 +64,7 @@ class Net_single(DeepModel_single):
         d2udx2 = Ddudx[:, 0:1]
         # eqs = 0.
         eqs = dudt + out_var * dudx - 0.01 / pi * d2udx2
-        if 'gpinn' in opts.net_type :
+        if 'gpinn' in opts.net_type:
             Dd2udx2 = paddle.incubate.autograd.grad(d2udx2, inn_var)
             Ddudt = paddle.incubate.autograd.grad(dudt, inn_var)
 
@@ -80,18 +83,23 @@ class Net_single(DeepModel_single):
 def build(opts, model):
     ## 采样
 
-    # print(out_BCs)
-
-    EQs_var = paddle.static.data('EQs_var', shape=[opts.Nx_EQs, 2], dtype='float32')
+    EQs_var = paddle.static.data('EQs_var', shape=[opts.Nx_EQs + 10 * opts.samp_ids, 2], dtype='float32')
     EQs_var.stop_gradient = False
     # EQs_tar = paddle.static.data('EQs_tar', shape=[opts.Nx_EQs, 1], dtype='float32')
 
-    Val_var = paddle.static.data('Val_var', shape=[opts.Nx_Val*opts.Nt_Val, 2], dtype='float32')
+    Val_var = paddle.static.data('Val_var', shape=[opts.Nx_Val * opts.Nt_Val, 2], dtype='float32')
     Val_var.stop_gradient = False
-    Val_tar = paddle.static.data('Val_tar', shape=[opts.Nx_Val*opts.Nt_Val, 1], dtype='float32')
+    Val_tar = paddle.static.data('Val_tar', shape=[opts.Nx_Val * opts.Nt_Val, 1], dtype='float32')
+
+    Add_var = paddle.static.data('Add_var', shape=[opts.Nx_Add, 2], dtype='float32')
+    Add_var.stop_gradient = False
+
+    learning_rate = paddle.static.data('lr', shape=[1,], dtype='float32')
 
     _, eqs, g_eqs = model.equation(EQs_var)
     val, eqs_v, _ = model.equation(Val_var)
+    _, eqs_a, _ = model.equation(Add_var)
+    eqs_a = paddle.abs(eqs_a)
     # val_grad = paddle.incubate.autograd.grad(val, Val_var)
 
     # print(fields_all)
@@ -102,14 +110,15 @@ def build(opts, model):
 
     total_loss = EQsLoss + gEQsLoss * opts.g_weight
 
-    print(model.parameters())
-    print(total_loss)
-    optimizer = paddle.optimizer.Adam(0.001)
+    # print(model.parameters())
+    print(EQs_var)
+    scheduler = paddle.optimizer.lr.MultiStepDecay(0.001, [opts.epochs_adam*0.5, opts.epoch_adam*0.75], gamma=0.1)
+    optimizer = paddle.optimizer.Adam(scheduler)
     # optimizer = paddle.incubate.optimizer.functional.minimize_lbfgs(func, x0)
     optimizer.minimize(total_loss)
     # optimizer.minimize(EQsLoss)
     #
-    return [val, eqs_v], [EQsLoss, gEQsLoss, datLoss, total_loss]
+    return [val, eqs_v, eqs_a], [EQsLoss, gEQsLoss, datLoss, total_loss], scheduler
 
 
 def gen_testdata():
@@ -120,8 +129,8 @@ def gen_testdata():
 
     return X.astype(np.float32), exact[..., None].astype(np.float32)
 
-def gen_traindata(N, method='uniform'):
 
+def gen_traindata(N, method='uniform'):
     if method == 'uniform':
         Nt = int((N / 2) ** 0.5)
         Nx = 2 * Nt
@@ -137,16 +146,19 @@ def gen_traindata(N, method='uniform'):
         n = int(N * 0.05)
         xx = np.random.random(N) * 2 - 1
         tt = np.random.random(N)
-        xx = np.concatenate([xx, np.ones((n, 1))*-1, np.ones((n, 1))*1, np.random.random(n)*2-1])
-        tt = np.concatenate([tt , np.random.random(n), np.random.random(n), np.zeros((n, 1))*1])
+        xx = np.concatenate([xx, np.ones((n, 1)) * -1, np.ones((n, 1)) * 1, np.random.random(n) * 2 - 1])
+        tt = np.concatenate([tt, np.random.random(n), np.random.random(n), np.zeros((n, 1)) * 1])
 
     X = np.vstack((np.ravel(xx), np.ravel(tt))).T
     return X.astype(np.float32)
+
+
 if __name__ == '__main__':
 
-    opts = get_args()
-    print(opts)
 
+    opts = get_args()
+    print("start sampling process {:3d}".format(opts.samp_ids))
+    print(opts)
 
     # use_cuda = False
     # place = fluid.CUDAPlace(0) if use_cuda else fluid.CPUPlace()
@@ -162,41 +174,56 @@ if __name__ == '__main__':
     if not isCreated:
         os.makedirs(tran_path)
 
-
     # 将控制台的结果输出到a.log文件，可以改成a.txt
     sys.stdout = visual_data.Logger(os.path.join(work_path, 'train.log'), sys.stdout)
 
     train_x = gen_traindata(opts.Nx_EQs, method='sobol')  # 生成监督测点
+    add_x = gen_traindata(opts.Nx_Add, method='sobol')
     valid_x, valid_u = gen_testdata()
     valid_x, valid_u = valid_x.reshape((-1, 2)), valid_u.reshape((-1, 1))
 
-    print(train_x.shape)
-    print(valid_x.shape)
-    print(valid_u.shape)
-
+    # print(train_x.shape)
+    # print(valid_x.shape)
+    # print(valid_u.shape)
 
     paddle.incubate.autograd.enable_prim()
 
     planes = [2, ] + [32, ] * 3 + [1, ]
     Net_model = Net_single(planes=planes, active=nn.Tanh())
-    [U_pred, R_pred], Loss = build(opts, Net_model)
-
-    exe = static.Executor()
-    exe.run(static.default_startup_program())
-    prog = static.default_main_program()
+    [U_pred, R_pred, R_add], Loss, Scheduler = build(opts, Net_model)
 
     Visual = visual_data.matplotlib_vision('/', field_name=('u',), input_name=('t', 'x'))
     star_time = time.time()
     log_loss = []
     start_epoch = 0
 
+    exe = static.Executor()
+    exe.run(static.default_startup_program())
+    prog = static.default_main_program()
+
+
+    if opts.samp_ids > 0:
+        params = paddle.load(os.path.join(work_path, 'latest_model.pdparams'))
+        prog.set_state_dict(params)
+        train_log = paddle.load(os.path.join(work_path, 'train_log.pth'))
+        log_loss, train_x = train_log['log_loss'], train_log['train_x']
+        temp = np.concatenate([train_x, add_x[:10]], axis=0)
+        [add_r, ] = exe.run(prog, feed={'EQs_var': temp, 'Add_var': add_x, 'Val_var': valid_x, 'Val_tar': valid_u},
+                            fetch_list=[R_add, ])
+
+        ids_x = np.argsort(-add_r.squeeze(), axis=0)[:10]
+        train_x = np.concatenate([train_x, add_x[ids_x]], axis=0)
+        print(train_x.shape)
+
     for epoch in range(start_epoch, opts.epochs_adam):
         ## 采样
 
-        exe.run(prog, feed={'EQs_var': train_x, 'Val_var': valid_x, 'Val_tar': valid_u}, fetch_list=[Loss[-1]])
+        Scheduler.step()
+        exe.run(prog, feed={'EQs_var': train_x, 'Add_var': add_x, 'Val_var': valid_x, 'Val_tar': valid_u},
+                fetch_list=[Loss[-1]])
 
         if epoch > 0 and epoch % opts.print_freq == 0:
-            all_items = exe.run(prog, feed={'EQs_var': train_x, 'Val_var': valid_x, 'Val_tar': valid_u},
+            all_items = exe.run(prog, feed={'EQs_var': train_x, 'Add_var': add_x, 'Val_var': valid_x, 'Val_tar': valid_u},
                                 fetch_list=[[U_pred, R_pred] + Loss[:-1]])
 
             x_true = valid_x.reshape((opts.Nt_Val, opts.Nx_Val, 2))
@@ -209,7 +236,7 @@ if __name__ == '__main__':
             # print(loss_items[1:])
 
             print('iter: {:6d}, lr: {:.1e}, cost: {:.2f}, val_loss: {:.2e}, EQs_loss: {:.2e}, Grad_loss: {:.2e}'.
-                  format(epoch, 0.001, time.time() - star_time, float(loss_items[-1]),
+                  format(epoch, Scheduler.get_lr(), time.time() - star_time, float(loss_items[-1]),
                          float(loss_items[0]), float(loss_items[1])))
 
         if epoch > 0 and epoch % opts.save_freq == 0:
@@ -227,12 +254,11 @@ if __name__ == '__main__':
 
             plt.figure(1, figsize=(25, 8))
             plt.clf()
-            Visual.plot_fields_ms(u_true, u_pred, x_true,)
+            Visual.plot_fields_ms(u_true, u_pred, x_true, )
             plt.xlabel("x")
             plt.ylabel("t")
             plt.tight_layout()
             plt.savefig(os.path.join(tran_path, 'pred_u.jpg'))
-
 
             err = u_pred - u_true
             plt.figure(2, figsize=(10, 8))
@@ -260,9 +286,9 @@ if __name__ == '__main__':
 
             star_time = time.time()
 
-
-            paddle.save({'log_loss': log_loss, 'valid_x': valid_x, 'valid_u': valid_u,
-                         'u_pred': u_pred, 'r_pred': r_pred,}, os.path.join(work_path, 'out_res.pth'), )
+            paddle.save({'log_loss': log_loss, 'train_x': train_x}, os.path.join(work_path, 'train_log.pth'))
+            paddle.save({'valid_x': valid_x, 'valid_u': valid_u,
+                         'u_pred': u_pred, 'r_pred': r_pred, }, os.path.join(work_path, 'out_res.pth'), )
 
     paddle.save(prog.state_dict(), os.path.join(work_path, 'latest_model.pdparams'), )
     shutil.copy(os.path.join(work_path, 'train.log'), tran_path)

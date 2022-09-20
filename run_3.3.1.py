@@ -24,7 +24,7 @@ pi = np.pi
 
 def get_args():
     parser = argparse.ArgumentParser('PINNs for Brinkman-Forchheimer model', add_help=False)
-    parser.add_argument('-f', type=str, default="读取额外的参数")
+    parser.add_argument('-f', type=str, default="external")
     parser.add_argument('--net_type', default='gpinn', type=str)
     parser.add_argument('--epochs_adam', default=60000, type=int)
     parser.add_argument('--save_freq', default=2000, type=int, help="frequency to save model and image")
@@ -258,10 +258,10 @@ if __name__ == '__main__':
 
             star_time = time.time()
 
-            paddle.save(prog.state_dict(), os.path.join(work_path, 'latest_model.pdparams'), )
+
             paddle.save({'log_loss': log_loss, 'par_pred': par_pred,
                          'valid_x': valid_x, 'valid_u': valid_u, 'valid_g': valid_g,
                          'u_pred': u_pred, 'u_grad': u_grad,
                          }, os.path.join(work_path, 'out_res.pth'), )
-
+    paddle.save(prog.state_dict(), os.path.join(work_path, 'latest_model.pdparams'), )
     shutil.copy(os.path.join(work_path, 'train.log'), tran_path)
