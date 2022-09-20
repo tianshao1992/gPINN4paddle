@@ -112,7 +112,7 @@ def build(opts, model):
 
     # print(model.parameters())
     print(EQs_var)
-    scheduler = paddle.optimizer.lr.MultiStepDecay(0.001, [opts.epochs_adam*0.5, opts.epoch_adam*0.75], gamma=0.1)
+    scheduler = paddle.optimizer.lr.MultiStepDecay(0.001, [opts.epochs_adam*0.5, opts.epochs_adam*0.75], gamma=0.1)
     optimizer = paddle.optimizer.Adam(scheduler)
     # optimizer = paddle.incubate.optimizer.functional.minimize_lbfgs(func, x0)
     optimizer.minimize(total_loss)
