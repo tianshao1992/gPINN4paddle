@@ -28,7 +28,7 @@ def get_args():
     parser = argparse.ArgumentParser('PINNs for Burgers2', add_help=False)
     parser.add_argument('-f', type=str, default="external")
     parser.add_argument('--net_type', default='pinn_rar', type=str)
-    parser.add_argument('--epochs_adam', default=20001, type=int)
+    parser.add_argument('--epochs_adam', default=20000, type=int)
     parser.add_argument('--save_freq', default=1000, type=int, help="frequency to save model and image")
     parser.add_argument('--print_freq', default=200, type=int, help="frequency to print loss")
     parser.add_argument('--device', default=0, type=int, help="time sampling in for boundary loss")
@@ -160,8 +160,12 @@ if __name__ == '__main__':
     print("start sampling process {:3d}".format(opts.samp_ids))
     print(opts)
 
-    # use_cuda = False
-    # place = fluid.CUDAPlace(0) if use_cuda else fluid.CPUPlace()
+    try:
+        import paddle.fluid as fluid
+        use_cuda = True
+        place = fluid.CUDAPlace(0) if use_cuda else fluid.CPUPlace()
+    except:
+        place = None
     # compiled_program = static.CompiledProgram(static.default_main_program())
 
     paddle.enable_static()
@@ -197,7 +201,7 @@ if __name__ == '__main__':
     log_loss = []
     start_epoch = 0
 
-    exe = static.Executor()
+    exe = static.Executor(place)
     exe.run(static.default_startup_program())
     prog = static.default_main_program()
 
@@ -215,7 +219,7 @@ if __name__ == '__main__':
         train_x = np.concatenate([train_x, add_x[ids_x]], axis=0)
         print(train_x.shape)
 
-    for epoch in range(start_epoch, opts.epochs_adam):
+    for epoch in range(start_epoch, 1+opts.epochs_adam):
         ## 采样
 
         Scheduler.step()
@@ -258,7 +262,7 @@ if __name__ == '__main__':
             plt.xlabel("x")
             plt.ylabel("t")
             plt.tight_layout()
-            plt.savefig(os.path.join(tran_path, 'pred_u.jpg'))
+            plt.savefig(os.path.join(tran_path, 'pred_u' + str(opts.samp_ids) + '.jpg'))
 
             err = u_pred - u_true
             plt.figure(2, figsize=(10, 8))
@@ -270,7 +274,7 @@ if __name__ == '__main__':
             cb = plt.colorbar()
             cb.ax.tick_params(labelsize=20)  # 设置色标刻度字体大小
             plt.tight_layout()
-            plt.savefig(os.path.join(tran_path, 'err_u.jpg'))
+            plt.savefig(os.path.join(tran_path, 'err_u' + str(opts.samp_ids) + '.jpg'))
 
             eqs = np.abs(r_pred)
             plt.figure(3, figsize=(10, 8))
@@ -282,13 +286,14 @@ if __name__ == '__main__':
             cb = plt.colorbar()
             cb.ax.tick_params(labelsize=20)  # 设置色标刻度字体大小
             plt.tight_layout()
-            plt.savefig(os.path.join(tran_path, 'err_eqs.jpg'))
+            plt.savefig(os.path.join(tran_path, 'err_eqs' + str(opts.samp_ids) + '.jpg'))
 
             star_time = time.time()
 
             paddle.save({'log_loss': log_loss, 'train_x': train_x}, os.path.join(work_path, 'train_log.pth'))
             paddle.save({'valid_x': valid_x, 'valid_u': valid_u,
-                         'u_pred': u_pred, 'r_pred': r_pred, }, os.path.join(work_path, 'out_res.pth'), )
+                         'u_pred': u_pred, 'r_pred': r_pred, },
+                        os.path.join(work_path, 'out_res' + str(opts.samp_ids) + '.pth'), )
 
     paddle.save(prog.state_dict(), os.path.join(work_path, 'latest_model.pdparams'), )
     shutil.copy(os.path.join(work_path, 'train.log'), tran_path)

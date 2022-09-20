@@ -1,4 +1,4 @@
-for name in 'pinn_rar' 'gpinn_rar'
+for name in 'gpinn_rar' 'pinn_rar'
   do
     for i in {0..40..1}
       do
@@ -9,11 +9,11 @@ for name in 'pinn_rar' 'gpinn_rar'
 
 
 
-#for name in 'pinn' 'gpinn'
-#  do
-#    for Nx in 1500 2000 2500 3000
-#      do
-#        python run_3.4.1.py --Nx_EQs ${Nx} --net_type ${name}
-#      done
-#      echo ${name} + "3.4.1 completed!"
-#  done
+for name in 'pinn' 'gpinn'
+  do
+    for Nx in 1500 2000 2500 3000
+      do
+        python run_3.4.1.py --Nx_EQs ${Nx} --net_type ${name}
+      done
+      echo ${name} + "3.4.1 completed!"
+  done

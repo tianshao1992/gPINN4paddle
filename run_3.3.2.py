@@ -160,9 +160,12 @@ if __name__ == '__main__':
     e = 0.4
     H = 1
 
-    # use_cuda = False
-    # place = fluid.CUDAPlace(0) if use_cuda else fluid.CPUPlace()
-    # compiled_program = static.CompiledProgram(static.default_main_program())
+    try:
+        import paddle.fluid as fluid
+        use_cuda = True
+        place = fluid.CUDAPlace(0) if use_cuda else fluid.CPUPlace()
+    except:
+        place = None
 
     paddle.enable_static()
 
@@ -190,7 +193,7 @@ if __name__ == '__main__':
     Net_model = Net_single(planes=planes, active=nn.Tanh())
     [U_pred, U_grad], Loss = build(opts, Net_model)
 
-    exe = static.Executor()
+    exe = static.Executor(place)
     exe.run(static.default_startup_program())
     prog = static.default_main_program()
 
