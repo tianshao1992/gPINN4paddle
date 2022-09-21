@@ -32,13 +32,13 @@ def get_args():
     parser.add_argument('--save_freq', default=1000, type=int, help="frequency to save model and image")
     parser.add_argument('--print_freq', default=200, type=int, help="frequency to print loss")
     parser.add_argument('--device', default=True, type=bool, help="use gpu")
-    parser.add_argument('--work_name', default='Burgers', type=str, help="save_path")
+    parser.add_argument('--work_name', default='Burgers_2D', type=str, help="save_path")
 
     parser.add_argument('--Nx_EQs', default=1500, type=int)
     parser.add_argument('--Nt_Val', default=100, type=int)
     parser.add_argument('--Nx_Val', default=256, type=int)
     parser.add_argument('--Nx_Add', default=100000, type=int)
-    parser.add_argument('--samp_ids', default=0, type=int)
+    parser.add_argument('--samp_ids', default=1, type=int)
     parser.add_argument('--g_weight', default=0.0001, type=float)
     return parser.parse_args()
 
@@ -215,10 +215,11 @@ if __name__ == '__main__':
         ids_x = np.argsort(-add_r.squeeze(), axis=0)[:10]
         train_x = np.concatenate([train_x, add_x[ids_x]], axis=0)
 
-        plt.figure(200, figsize=(10, 8))
+        plt.figure(200, figsize=(12, 10))
         plt.clf()
-        Visual.scatter(train_x[:-10, 0], train_x[:-10, 1])
-        Visual.scatter(train_x[10:, 0], train_x[10:, 1])
+        plt.scatter(train_x[:-10, 0], train_x[:-10, 1], c='b')
+        plt.scatter(train_x[10:, 0], train_x[10:, 1], c='r')
+        cb.ax.tick_params(labelsize=20)
         plt.xlabel("x")
         plt.ylabel("t")
         plt.tight_layout()
@@ -252,12 +253,12 @@ if __name__ == '__main__':
         if epoch > 0 and epoch % opts.save_freq == 0:
 
             # print(np.array(par_pred).shape)
-            plt.figure(100, figsize=(10, 6))
-            plt.rcParams['font.size'] = 20
+            plt.figure(100, figsize=(12, 10))
             plt.clf()
             Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, -1], 'dat_loss')
             Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 0], 'eqs_loss')
             Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 1], 'geqs_loss')
+            plt.rcParams['font.size'] = 20
             plt.tight_layout()
             plt.savefig(os.path.join(tran_path, 'log_loss.svg'))
 
@@ -270,7 +271,7 @@ if __name__ == '__main__':
             plt.savefig(os.path.join(tran_path, 'pred_u' + str(opts.samp_ids) + '.jpg'))
 
             err = u_pred - u_true
-            plt.figure(2, figsize=(10, 8))
+            plt.figure(2, figsize=(12, 10))
             plt.clf()
             plt.pcolormesh(x_true[..., 0], x_true[..., 1], err[..., 0], cmap='viridis',
                            shading='gouraud', antialiased=True, snap=True)
@@ -282,7 +283,7 @@ if __name__ == '__main__':
             plt.savefig(os.path.join(tran_path, 'err_u' + str(opts.samp_ids) + '.jpg'))
 
             eqs = np.abs(r_pred)
-            plt.figure(3, figsize=(10, 8))
+            plt.figure(3, figsize=(12, 10))
             plt.clf()
             plt.pcolormesh(x_true[..., 0], x_true[..., 1], r_pred[..., 0], cmap='viridis', shading='gouraud',
                            antialiased=True, snap=True)
