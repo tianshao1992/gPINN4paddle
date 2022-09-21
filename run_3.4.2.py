@@ -31,7 +31,7 @@ def get_args():
     parser.add_argument('--epochs_adam', default=20000, type=int)
     parser.add_argument('--save_freq', default=1000, type=int, help="frequency to save model and image")
     parser.add_argument('--print_freq', default=200, type=int, help="frequency to print loss")
-    parser.add_argument('--device', default=0, type=int, help="time sampling in for boundary loss")
+    parser.add_argument('--device', default=True, type=bool, help="use gpu")
     parser.add_argument('--work_name', default='Burgers', type=str, help="save_path")
 
     parser.add_argument('--Nx_EQs', default=1500, type=int)
@@ -162,7 +162,7 @@ if __name__ == '__main__':
 
     try:
         import paddle.fluid as fluid
-        use_cuda = True
+        use_cuda = opts.device
         place = fluid.CUDAPlace(0) if use_cuda else fluid.CPUPlace()
     except:
         place = None
