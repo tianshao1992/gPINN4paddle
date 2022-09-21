@@ -80,8 +80,6 @@ class Net_single(DeepModel_single):
 def build(opts, model):
     ## 采样
 
-    # print(out_BCs)
-
     EQs_var = paddle.static.data('EQs_var', shape=[opts.Nx_EQs, 2], dtype='float32')
     EQs_var.stop_gradient = False
     # EQs_tar = paddle.static.data('EQs_tar', shape=[opts.Nx_EQs, 1], dtype='float32')
@@ -94,16 +92,11 @@ def build(opts, model):
     val, eqs_v, _ = model.equation(Val_var)
     # val_grad = paddle.incubate.autograd.grad(val, Val_var)
 
-    # print(fields_all)
-
     EQsLoss = paddle.norm(eqs, p=2) ** 2 / opts.Nx_EQs  # 方程所有计算守恒残差点的损失，不参与训练
     gEQsLoss = paddle.norm(g_eqs[0], p=2) ** 2 / opts.Nx_EQs + paddle.norm(g_eqs[1], p=2) ** 2 / opts.Nx_EQs
     datLoss = paddle.norm(Val_tar - val, p=2) ** 2 / opts.Nt_Val / opts.Nx_Val  # 方程所有计算守恒残差点的损失，不参与训练
 
     total_loss = EQsLoss + gEQsLoss * opts.g_weight
-
-    print(model.parameters())
-    print(total_loss)
     optimizer = paddle.optimizer.Adam(0.001)
     # optimizer = paddle.incubate.optimizer.functional.minimize_lbfgs(func, x0)
     optimizer.minimize(total_loss)
@@ -173,10 +166,6 @@ if __name__ == '__main__':
     valid_x, valid_u = gen_testdata()
     valid_x, valid_u = valid_x.reshape((-1, 2)), valid_u.reshape((-1, 1))
 
-    print(train_x.shape)
-    print(valid_x.shape)
-    print(valid_u.shape)
-
 
     paddle.incubate.autograd.enable_prim()
 
@@ -222,7 +211,6 @@ if __name__ == '__main__':
             plt.figure(100, figsize=(10, 6))
             plt.rcParams['font.size'] = 20
             plt.clf()
-            plt.subplot(2, 1, 1)
             Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, -1], 'dat_loss')
             Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 0], 'eqs_loss')
             Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 1], 'geqs_loss')

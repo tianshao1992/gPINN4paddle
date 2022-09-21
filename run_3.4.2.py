@@ -28,7 +28,7 @@ def get_args():
     parser = argparse.ArgumentParser('PINNs for Burgers2', add_help=False)
     parser.add_argument('-f', type=str, default="external")
     parser.add_argument('--net_type', default='pinn_rar', type=str)
-    parser.add_argument('--epochs_adam', default=20000, type=int)
+    parser.add_argument('--epochs_adam', default=30000, type=int)
     parser.add_argument('--save_freq', default=1000, type=int, help="frequency to save model and image")
     parser.add_argument('--print_freq', default=200, type=int, help="frequency to print loss")
     parser.add_argument('--device', default=True, type=bool, help="use gpu")
@@ -111,8 +111,8 @@ def build(opts, model):
     total_loss = EQsLoss + gEQsLoss * opts.g_weight
 
     # print(model.parameters())
-    print(EQs_var)
-    scheduler = paddle.optimizer.lr.MultiStepDecay(0.001, [opts.epochs_adam*0.5, opts.epochs_adam*0.75], gamma=0.1)
+    # print(EQs_var)
+    scheduler = paddle.optimizer.lr.MultiStepDecay(0.001, [opts.epochs_adam*0.6, opts.epochs_adam*0.8], gamma=0.1)
     optimizer = paddle.optimizer.Adam(scheduler)
     # optimizer = paddle.incubate.optimizer.functional.minimize_lbfgs(func, x0)
     optimizer.minimize(total_loss)
@@ -186,9 +186,6 @@ if __name__ == '__main__':
     valid_x, valid_u = gen_testdata()
     valid_x, valid_u = valid_x.reshape((-1, 2)), valid_u.reshape((-1, 1))
 
-    # print(train_x.shape)
-    # print(valid_x.shape)
-    # print(valid_u.shape)
 
     paddle.incubate.autograd.enable_prim()
 
@@ -217,7 +214,15 @@ if __name__ == '__main__':
 
         ids_x = np.argsort(-add_r.squeeze(), axis=0)[:10]
         train_x = np.concatenate([train_x, add_x[ids_x]], axis=0)
-        print(train_x.shape)
+
+        plt.figure(200, figsize=(10, 8))
+        plt.clf()
+        Visual.scatter(train_x[:-10, 0], train_x[:-10, 1])
+        Visual.scatter(train_x[10:, 0], train_x[10:, 1])
+        plt.xlabel("x")
+        plt.ylabel("t")
+        plt.tight_layout()
+        plt.savefig(os.path.join(tran_path, 'add_points' + str(opts.samp_ids) + '.svg'))
 
     for epoch in range(start_epoch, 1+opts.epochs_adam):
         ## 采样
@@ -250,7 +255,6 @@ if __name__ == '__main__':
             plt.figure(100, figsize=(10, 6))
             plt.rcParams['font.size'] = 20
             plt.clf()
-            plt.subplot(2, 1, 1)
             Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, -1], 'dat_loss')
             Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 0], 'eqs_loss')
             Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 1], 'geqs_loss')

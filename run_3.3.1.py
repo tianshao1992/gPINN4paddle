@@ -214,7 +214,6 @@ if __name__ == '__main__':
 
             log_loss.append(np.array(loss_items).squeeze())
             par_pred.append(np.array(p_pred))
-            # print(loss_items[1:])
 
             print('iter: {:6d}, lr: {:.1e}, cost: {:.2f}, val_loss: {:.2e}, v_e_pred: {:.2e}\n'
                   'EQs_loss: {:.2e}, BCS_loss: {:.2e}, Sup_loss: {:.2e}, Grad_loss: {:.2e}'.

@@ -84,8 +84,6 @@ def build(opts, model):
     EQs_var = paddle.static.data('EQs_var', shape=[opts.Nx_EQs, 1], dtype='float32')
     EQs_var.stop_gradient = False
     # EQs_tar = paddle.static.data('EQs_tar', shape=[opts.Nx_EQs, 1], dtype='float32')
-
-    # print(EQs_var)
     BCs_var = paddle.static.data('BCs_var', shape=[2, 1], dtype='float32')
     BCs_var.stop_gradient = True
     BCs_tar = paddle.static.data('BCs_tar', shape=[2, 1], dtype='float32')
@@ -107,8 +105,6 @@ def build(opts, model):
     val = model.out_transform(Val_var, val)
     val_grad = paddle.incubate.autograd.grad(val, Val_var)
 
-    # print(fields_all)
-
     EQsLoss = paddle.norm(eqs, p=2) ** 2 / opts.Nx_EQs  # 方程所有计算守恒残差点的损失，不参与训练
     gEQsLoss = paddle.norm(g_eqs, p=2) ** 2 / opts.Nx_EQs  # 方程所有计算守恒残差点的损失，不参与训练
     SupLoss = paddle.norm(Sup_tar - sup, p=2) ** 2 / opts.Nx_Sup  # 方程所有计算守恒残差点的损失，不参与训练
@@ -117,8 +113,6 @@ def build(opts, model):
 
     total_loss = EQsLoss + SupLoss + gEQsLoss * opts.g_weight
 
-    print(model.parameters())
-    # print(total_loss)
     optimizer = paddle.optimizer.Adam(0.001)
     optimizer.minimize(total_loss)
     # optimizer.minimize(EQsLoss)
@@ -238,9 +232,8 @@ if __name__ == '__main__':
                 Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 3], 'grad_loss')
             plt.savefig(os.path.join(tran_path, 'log_loss.svg'))
 
-            plt.figure(1, figsize=(20, 10))
+            plt.figure(1, figsize=(10, 8))
             plt.clf()
-            plt.subplot(211)
             Visual.plot_loss(np.arange(len(par_pred)), np.array(par_pred)[:, 0], 'v_e_pred')
             Visual.plot_loss(np.arange(len(par_pred)), np.array(par_pred)[:, 1], 'K_pred')
             Visual.plot_loss(np.arange(len(par_pred)), np.ones(len(par_pred)) * 0.001, 'EXACT')
