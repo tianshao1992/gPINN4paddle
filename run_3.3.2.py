@@ -28,7 +28,7 @@ def get_args():
     parser.add_argument('--net_type', default='gpinn', type=str)
     parser.add_argument('--epochs_adam', default=60000, type=int)
     parser.add_argument('--save_freq', default=2000, type=int, help="frequency to save model and image")
-    parser.add_argument('--print_freq', default=2000, type=int, help="frequency to print loss")
+    parser.add_argument('--print_freq', default=200, type=int, help="frequency to print loss")
     parser.add_argument('--device', default=True, type=bool, help="use gpu")
     parser.add_argument('--work_name', default='Brinkman-Forchheimer-2', type=str, help="save_path")
 
@@ -221,14 +221,13 @@ if __name__ == '__main__':
             log_loss.append(np.array(loss_items).squeeze())
             par_pred.append(np.array([v_e_pred, K_pred]))
             # print(loss_items[1:])
-
             print('iter: {:6d}, lr: {:.1e}, cost: {:.2f}, val_loss: {:.2e}, v_e_pred: {:.2e}, K_pred: {:.2e}\n'
                   'EQs_loss: {:.2e}, BCS_loss: {:.2e}, Sup_loss: {:.2e}, Grad_loss: {:.2e}'.
                   format(epoch, 0.001, time.time() - star_time, float(loss_items[-1]), float(v_e_pred), float(K_pred),
                          float(loss_items[0]), float(loss_items[1]), float(loss_items[2]), float(loss_items[3])))
-
+            star_time = time.time()
             # print(np.array(par_pred).shape)
-
+        if epoch > 0 and epoch % opts.save_freq == 0:
             plt.figure(1, figsize=(20, 10))
             plt.clf()
             Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, -1], 'dat_loss')
@@ -276,4 +275,5 @@ if __name__ == '__main__':
                          os.path.join(work_path, 'out_res.pth'), )
 
     paddle.save(prog.state_dict(), os.path.join(work_path, 'latest_model.pdparams'), )
-    shutil.copy(os.path.join(work_path, 'train.log'), tran_path)
+    time.sleep(3)
+    shutil.move(os.path.join(work_path, 'train.log'), tran_path)

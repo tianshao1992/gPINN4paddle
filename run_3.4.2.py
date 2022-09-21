@@ -242,6 +242,7 @@ if __name__ == '__main__':
             print('iter: {:6d}, lr: {:.1e}, cost: {:.2f}, val_loss: {:.2e}, EQs_loss: {:.2e}, Grad_loss: {:.2e}'.
                   format(epoch, Scheduler.get_lr(), time.time() - star_time, float(loss_items[-1]),
                          float(loss_items[0]), float(loss_items[1])))
+            star_time = time.time()
 
         if epoch > 0 and epoch % opts.save_freq == 0:
 
@@ -296,4 +297,5 @@ if __name__ == '__main__':
                         os.path.join(work_path, 'out_res' + str(opts.samp_ids) + '.pth'), )
 
     paddle.save(prog.state_dict(), os.path.join(work_path, 'latest_model.pdparams'), )
-    shutil.copy(os.path.join(work_path, 'train.log'), tran_path)
+    time.sleep(3)
+    shutil.move(os.path.join(work_path, 'train.log'), tran_path)

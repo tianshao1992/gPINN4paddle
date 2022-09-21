@@ -214,6 +214,7 @@ if __name__ == '__main__':
             print('iter: {:6d}, lr: {:.1e}, cost: {:.2f}, val_loss: {:.2e}, EQs_loss: {:.2e}, Grad_loss: {:.2e}'.
                   format(epoch, 0.001, time.time() - star_time, float(loss_items[-1]),
                          float(loss_items[0]), float(loss_items[1])))
+            star_time = time.time()
 
         if epoch > 0 and epoch % opts.save_freq == 0:
 
@@ -261,11 +262,10 @@ if __name__ == '__main__':
             plt.tight_layout()
             plt.savefig(os.path.join(tran_path, 'err_eqs.jpg'))
 
-            star_time = time.time()
-
 
             paddle.save({'log_loss': log_loss, 'valid_x': valid_x, 'valid_u': valid_u,
                          'u_pred': u_pred, 'r_pred': r_pred,}, os.path.join(work_path, 'out_res.pth'), )
 
     paddle.save(prog.state_dict(), os.path.join(work_path, 'latest_model.pdparams'), )
-    shutil.copy(os.path.join(work_path, 'train.log'), tran_path)
+    time.sleep(3)
+    shutil.move(os.path.join(work_path, 'train.log'), tran_path)
