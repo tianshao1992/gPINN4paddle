@@ -28,7 +28,7 @@ def get_args():
     parser = argparse.ArgumentParser('PINNs for Burgers2', add_help=False)
     parser.add_argument('-f', type=str, default="external")
     parser.add_argument('--net_type', default='pinn_rar', type=str)
-    parser.add_argument('--epochs_adam', default=30000, type=int)
+    parser.add_argument('--epochs_adam', default=50000, type=int)
     parser.add_argument('--save_freq', default=1000, type=int, help="frequency to save model and image")
     parser.add_argument('--print_freq', default=200, type=int, help="frequency to print loss")
     parser.add_argument('--device', default=True, type=bool, help="use gpu")
@@ -38,7 +38,7 @@ def get_args():
     parser.add_argument('--Nt_Val', default=100, type=int)
     parser.add_argument('--Nx_Val', default=256, type=int)
     parser.add_argument('--Nx_Add', default=100000, type=int)
-    parser.add_argument('--samp_ids', default=1, type=int)
+    parser.add_argument('--samp_ids', default=0, type=int)
     parser.add_argument('--g_weight', default=0.0001, type=float)
     return parser.parse_args()
 
@@ -94,15 +94,11 @@ def build(opts, model):
     Add_var = paddle.static.data('Add_var', shape=[opts.Nx_Add, 2], dtype='float32')
     Add_var.stop_gradient = False
 
-    learning_rate = paddle.static.data('lr', shape=[1,], dtype='float32')
-
     _, eqs, g_eqs = model.equation(EQs_var)
     val, eqs_v, _ = model.equation(Val_var)
     _, eqs_a, _ = model.equation(Add_var)
     eqs_a = paddle.abs(eqs_a)
-    # val_grad = paddle.incubate.autograd.grad(val, Val_var)
 
-    # print(fields_all)
 
     EQsLoss = paddle.norm(eqs, p=2) ** 2 / opts.Nx_EQs  # 方程所有计算守恒残差点的损失，不参与训练
     gEQsLoss = paddle.norm(g_eqs[0], p=2) ** 2 / opts.Nx_EQs + paddle.norm(g_eqs[1], p=2) ** 2 / opts.Nx_EQs
@@ -110,8 +106,6 @@ def build(opts, model):
 
     total_loss = EQsLoss + gEQsLoss * opts.g_weight
 
-    # print(model.parameters())
-    # print(EQs_var)
     scheduler = paddle.optimizer.lr.MultiStepDecay(0.001, [opts.epochs_adam*0.6, opts.epochs_adam*0.8], gamma=0.1)
     optimizer = paddle.optimizer.Adam(scheduler)
     # optimizer = paddle.incubate.optimizer.functional.minimize_lbfgs(func, x0)
@@ -219,7 +213,6 @@ if __name__ == '__main__':
         plt.clf()
         plt.scatter(train_x[:-10, 0], train_x[:-10, 1], c='b')
         plt.scatter(train_x[10:, 0], train_x[10:, 1], c='r')
-        cb.ax.tick_params(labelsize=20)
         plt.xlabel("x")
         plt.ylabel("t")
         plt.tight_layout()
