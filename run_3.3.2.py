@@ -185,8 +185,6 @@ if __name__ == '__main__':
     valid_x, valid_u, valid_g = gen_all(opts.Nx_Val)
     bcs_x, bcs_u = train_x[[0, -1]], train_u[[0, -1]]
 
-    print(bcs_x)
-
     paddle.incubate.autograd.enable_prim()
 
     planes = [1, ] + [20, ] * 3 + [1, ]
@@ -203,7 +201,7 @@ if __name__ == '__main__':
     par_pred = []
     start_epoch = 0
 
-    for epoch in range(start_epoch, opts.epochs_adam):
+    for epoch in range(start_epoch, 1+opts.epochs_adam):
         ## 采样
 
         exe.run(prog, feed={'EQs_var': train_x, 'BCs_var': bcs_x, 'BCs_tar': bcs_u, 'Sup_var': sup_x, 'Sup_tar': sup_u,

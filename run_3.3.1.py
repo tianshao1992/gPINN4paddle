@@ -196,7 +196,7 @@ if __name__ == '__main__':
     par_pred = []
     start_epoch = 0
 
-    for epoch in range(start_epoch, opts.epochs_adam):
+    for epoch in range(start_epoch, 1+opts.epochs_adam):
         ## 采样
 
         exe.run(prog, feed={'EQs_var': train_x, 'BCs_var': bcs_x, 'BCs_tar': bcs_u, 'Sup_var': sup_x, 'Sup_tar': sup_u,

@@ -193,7 +193,7 @@ if __name__ == '__main__':
     log_loss = []
     start_epoch = 0
 
-    for epoch in range(start_epoch, opts.epochs_adam):
+    for epoch in range(start_epoch, 1+opts.epochs_adam):
         ## 采样
 
         exe.run(prog, feed={'EQs_var': train_x, 'Val_var': valid_x, 'Val_tar': valid_u}, fetch_list=[Loss[-1]])
