@@ -69,7 +69,7 @@ class Net_single(DeepModel_single):
             d3udx3, d3udx2t = Dd2udx2[:, 0:1], Dd2udx2[:, 1:2]
 
             g_eqs = [d2udtx + (dudx * dudx + out_var * d2udx2) - 0.01 / pi * d3udx3,
-                     d2udt2 + dudt * dudx + out_var * d2udtx - 0.01 / pi * d3udx2t, ]
+                     d2udt2 + (dudt * dudx + out_var * d2udtx) - 0.01 / pi * d3udx2t, ]
             # g_eqs = paddle.concat(g_eqs, axis=-1)
         else:
             g_eqs = paddle.zeros((2,), dtype=paddle.float32)
@@ -93,7 +93,7 @@ def build(opts, model):
     # val_grad = paddle.incubate.autograd.grad(val, Val_var)
 
     EQsLoss = paddle.norm(eqs, p=2) ** 2 / opts.Nx_EQs  # 方程所有计算守恒残差点的损失，不参与训练
-    gEQsLoss = paddle.norm(g_eqs[0], p=2) ** 2 / opts.Nx_EQs + paddle.norm(g_eqs[1], p=2) ** 2 / opts.Nx_EQs
+    gEQsLoss = (paddle.norm(g_eqs[0], p=2) ** 2 / opts.Nx_EQs + paddle.norm(g_eqs[1], p=2) ** 2 / opts.Nx_EQs) / 2
     datLoss = paddle.norm(Val_tar - val, p=2) ** 2 / opts.Nt_Val / opts.Nx_Val  # 方程所有计算守恒残差点的损失，不参与训练
 
     total_loss = EQsLoss + gEQsLoss * opts.g_weight

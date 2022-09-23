@@ -72,7 +72,7 @@ class Net_single(DeepModel_single):
             d3udx3, d3udx2t = Dd2udx2[:, 0:1], Dd2udx2[:, 1:2]
 
             g_eqs = [d2udtx + (dudx * dudx + out_var * d2udx2) - 0.01 / pi * d3udx3,
-                     d2udt2 + dudt * dudx + out_var * d2udtx - 0.01 / pi * d3udx2t, ]
+                     d2udt2 + (dudt * dudx + out_var * d2udtx) - 0.01 / pi * d3udx2t, ]
             # g_eqs = paddle.concat(g_eqs, axis=-1)
         else:
             g_eqs = paddle.zeros((2,), dtype=paddle.float32)
@@ -212,7 +212,7 @@ if __name__ == '__main__':
         plt.figure(200, figsize=(12, 10))
         plt.clf()
         plt.scatter(train_x[:-10, 0], train_x[:-10, 1], c='b')
-        plt.scatter(train_x[10:, 0], train_x[10:, 1], c='r')
+        plt.scatter(train_x[-10:, 0], train_x[-10:, 1], c='r')
         plt.xlabel("x")
         plt.ylabel("t")
         plt.tight_layout()
