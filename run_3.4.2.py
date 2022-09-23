@@ -101,7 +101,7 @@ def build(opts, model):
 
 
     EQsLoss = paddle.norm(eqs, p=2) ** 2 / opts.Nx_EQs  # 方程所有计算守恒残差点的损失，不参与训练
-    gEQsLoss = paddle.norm(g_eqs[0], p=2) ** 2 / opts.Nx_EQs + paddle.norm(g_eqs[1], p=2) ** 2 / opts.Nx_EQs
+    gEQsLoss = (paddle.norm(g_eqs[0], p=2) ** 2 / opts.Nx_EQs + paddle.norm(g_eqs[1], p=2) ** 2 / opts.Nx_EQs) / 2
     datLoss = paddle.norm(Val_tar - val, p=2) ** 2 / opts.Nt_Val / opts.Nx_Val  # 方程所有计算守恒残差点的损失，不参与训练
 
     total_loss = EQsLoss + gEQsLoss * opts.g_weight

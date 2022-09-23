@@ -26,9 +26,9 @@ def get_args():
     parser = argparse.ArgumentParser('PINNs for Brinkman-Forchheimer model', add_help=False)
     parser.add_argument('-f', type=str, default="external")
     parser.add_argument('--net_type', default='gpinn', type=str)
-    parser.add_argument('--epochs_adam', default=60000, type=int)
-    parser.add_argument('--save_freq', default=2000, type=int, help="frequency to save model and image")
-    parser.add_argument('--print_freq', default=200, type=int, help="frequency to print loss")
+    parser.add_argument('--epochs_adam', default=50000, type=int)
+    parser.add_argument('--save_freq', default=5000, type=int, help="frequency to save model and image")
+    parser.add_argument('--print_freq', default=1000, type=int, help="frequency to print loss")
     parser.add_argument('--device', default=True, type=bool, help="use gpu")
     parser.add_argument('--work_name', default='Brinkman-Forchheimer-1', type=str, help="save_path")
 
@@ -60,7 +60,7 @@ class Net_single(DeepModel_single):
         d2udx2 = paddle.incubate.autograd.grad(dudx, inn_var)
         # v_e = paddle.log(paddle.exp(self.v_e) + 1) * 0.1 #self.get_parameter #float(np.log(np.exp(1e-3)) + 1) * 0.1
         eqs = - 1 / e * d2udx2 * self.get_parameter + v * out_var / K - g
-        if opts.net_type == 'gpinn':
+        if 'gpinn' in opts.net_type:
             d3udx3 = paddle.incubate.autograd.grad(d2udx2, inn_var)
             g_eqs = -1 / e * d3udx3 * self.get_parameter + v / K * dudx
         else:
@@ -110,13 +110,12 @@ def build(opts, model):
 
     total_loss = EQsLoss + SupLoss + gEQsLoss * opts.g_weight
 
-    # print(model.parameters())
-    # print(total_loss)
-    optimizer = paddle.optimizer.Adam(0.001)
+    scheduler = paddle.optimizer.lr.MultiStepDecay(0.001, [opts.epochs_adam*0.6, opts.epochs_adam*0.8], gamma=0.1)
+    optimizer = paddle.optimizer.Adam(scheduler)
     optimizer.minimize(total_loss)
     # optimizer.minimize(EQsLoss)
     #
-    return [val, val_grad], [EQsLoss, BCsLoss, SupLoss, gEQsLoss, datLoss, total_loss]
+    return [val, val_grad], [EQsLoss, BCsLoss, SupLoss, gEQsLoss, datLoss, total_loss], scheduler
 
 
 # 解析解 ve=1e-3
@@ -184,7 +183,7 @@ if __name__ == '__main__':
 
     planes = [1, ] + [20, ] * 3 + [1, ]
     Net_model = Net_single(planes=planes, active=nn.Tanh())
-    [U_pred, U_grad], Loss = build(opts, Net_model)
+    [U_pred, U_grad], Loss, Scheduler = build(opts, Net_model)
 
     exe = static.Executor(place)
     exe.run(static.default_startup_program())
@@ -198,7 +197,7 @@ if __name__ == '__main__':
 
     for epoch in range(start_epoch, 1+opts.epochs_adam):
         ## 采样
-
+        Scheduler.step()
         exe.run(prog, feed={'EQs_var': train_x, 'BCs_var': bcs_x, 'BCs_tar': bcs_u, 'Sup_var': sup_x, 'Sup_tar': sup_u,
                             'Val_var': valid_x, 'Val_tar': valid_u}, fetch_list=[Loss[-1]])
 
@@ -228,7 +227,7 @@ if __name__ == '__main__':
             Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 0], 'eqs_loss')
             # Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 1], 'BCS_loss')
             Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 2], 'sup_loss')
-            if opts.net_type == "gpinn":
+            if "gpinn" in opts.net_type:
                 Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 3], 'grad_loss')
             plt.savefig(os.path.join(tran_path, 'log_loss.svg'))
 

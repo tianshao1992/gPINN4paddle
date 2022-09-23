@@ -1,19 +1,18 @@
+#bash
+aa=1
+c="$aa"
+echo $c
 
-for name in 'gpinn' 'pinn'
+for id in {1..10..1}
   do
-    for Nx in 5 10 15 20 25 30
+    for name in 'gpinn' 'pinn'
       do
-        python run_3.3.1.py --Nx_EQs ${Nx} --net_type ${name}
+        for Nx in 5 10 15 20 25 30
+          do
+            python run_3.3.1.py --Nx_EQs ${Nx} --net_type ${name}+$"$id"
+            echo ${name}+$"$id"+"-"+$"$Nx"+" completed!"
+          done
       done
-      echo ${name} + "3.3.1 completed!"
   done
 
 
-  for name in 'pinn' 'gpinn'
-  do
-    for Nx in 5 10 15 20 25 30
-      do
-        python run_3.3.2.py --Nx_EQs ${Nx} --net_type ${name}
-      done
-      echo ${name} + "3.3.2 completed!"
-  done

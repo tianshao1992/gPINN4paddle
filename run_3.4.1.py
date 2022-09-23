@@ -97,12 +97,13 @@ def build(opts, model):
     datLoss = paddle.norm(Val_tar - val, p=2) ** 2 / opts.Nt_Val / opts.Nx_Val  # 方程所有计算守恒残差点的损失，不参与训练
 
     total_loss = EQsLoss + gEQsLoss * opts.g_weight
-    optimizer = paddle.optimizer.Adam(0.001)
+    scheduler = paddle.optimizer.lr.MultiStepDecay(0.001, [opts.epochs_adam*0.6, opts.epochs_adam*0.8], gamma=0.1)
+    optimizer = paddle.optimizer.Adam(scheduler)
     # optimizer = paddle.incubate.optimizer.functional.minimize_lbfgs(func, x0)
     optimizer.minimize(total_loss)
     # optimizer.minimize(EQsLoss)
     #
-    return [val, eqs_v], [EQsLoss, gEQsLoss, datLoss, total_loss]
+    return [val, eqs_v], [EQsLoss, gEQsLoss, datLoss, total_loss], scheduler
 
 
 def gen_testdata():
@@ -171,7 +172,7 @@ if __name__ == '__main__':
 
     planes = [2, ] + [32, ] * 3 + [1, ]
     Net_model = Net_single(planes=planes, active=nn.Tanh())
-    [U_pred, R_pred], Loss = build(opts, Net_model)
+    [U_pred, R_pred], Loss, Scheduler = build(opts, Net_model)
 
     exe = static.Executor(place)
     exe.run(static.default_startup_program())
@@ -184,7 +185,7 @@ if __name__ == '__main__':
 
     for epoch in range(start_epoch, 1+opts.epochs_adam):
         ## 采样
-
+        Scheduler.step()
         exe.run(prog, feed={'EQs_var': train_x, 'Val_var': valid_x, 'Val_tar': valid_u}, fetch_list=[Loss[-1]])
 
         if epoch > 0 and epoch % opts.print_freq == 0:
