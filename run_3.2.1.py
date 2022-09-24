@@ -63,7 +63,6 @@ class Net_single(DeepModel_single):
             g_eqs = paddle.incubate.autograd.grad(eqs, inn_var)
         else:
             g_eqs = paddle.zeros((1,), dtype=paddle.float32)
-
         return eqs, g_eqs
 
 
