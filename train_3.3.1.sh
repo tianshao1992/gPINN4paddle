@@ -1,13 +1,16 @@
 #bash
-#0.00001, 0.0001, 0.001,
-for g in  0.01 0.1
+aa=1
+c="$aa"
+echo $c
+
+for id in {1..10..1}
   do
-    for name in 'gpinn'
+    for name in 'gpinn' 'pinn'
       do
-        for Nx in 10 12 14 16 18 20
+        for Nx in 5 10 15 20 25 30
           do
-            python run_3.3.1.py --Nx_EQs ${Nx} --g_weight ${g}  --net_type ${name}+$"$g"
-            echo ${name}+$"$g"+"-"+$"$Nx"+" completed!"
+            python run_3.3.1.py --Nx_EQs ${Nx} --net_type ${name}+$"$id"
+            echo ${name}+$"$id"+"-"+$"$Nx"+" completed!"
           done
       done
   done
