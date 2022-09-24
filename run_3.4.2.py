@@ -151,8 +151,6 @@ if __name__ == '__main__':
 
 
     opts = get_args()
-    print("start sampling process {:3d}".format(opts.samp_ids))
-    print(opts)
 
     try:
         import paddle.fluid as fluid
@@ -174,6 +172,8 @@ if __name__ == '__main__':
 
     # 将控制台的结果输出到a.log文件，可以改成a.txt
     sys.stdout = visual_data.Logger(os.path.join(work_path, 'train.log'), sys.stdout)
+    print("start sampling process {:3d}".format(opts.samp_ids))
+    print(opts)
 
     train_x = gen_traindata(opts.Nx_EQs, method='sobol')  # 生成监督测点
     add_x = gen_traindata(opts.Nx_Add, method='sobol')

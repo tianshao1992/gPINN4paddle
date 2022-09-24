@@ -1,11 +1,8 @@
 #bash
-aa=1
-c="$aa"
-echo $c
 
 for id in {1..10..1}
   do
-    for name in 'gpinn' 'pinn'
+    for name in 'gpinn'
       do
         for Nx in 5 10 15 20 25 30
           do

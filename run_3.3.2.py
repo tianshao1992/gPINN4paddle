@@ -26,9 +26,9 @@ def get_args():
     parser = argparse.ArgumentParser('PINNs for Brinkman-Forchheimer inverse par2', add_help=False)
     parser.add_argument('-f', type=str, default="external")
     parser.add_argument('--net_type', default='gpinn', type=str)
-    parser.add_argument('--epochs_adam', default=50000, type=int)
-    parser.add_argument('--save_freq', default=5000, type=int, help="frequency to save model and image")
-    parser.add_argument('--print_freq', default=1000, type=int, help="frequency to print loss")
+    parser.add_argument('--epochs_adam', default=80000, type=int)
+    parser.add_argument('--save_freq', default=10000, type=int, help="frequency to save model and image")
+    parser.add_argument('--print_freq', default=2000, type=int, help="frequency to print loss")
     parser.add_argument('--device', default=True, type=bool, help="use gpu")
     parser.add_argument('--work_name', default='Brinkman-Forchheimer-2', type=str, help="save_path")
 
@@ -111,10 +111,10 @@ def build(opts, model):
     BCsLoss = paddle.norm(BCs_tar - bcs, p=2) ** 2 / 2
     datLoss = paddle.norm(Val_tar - val, p=2) ** 2 / opts.Nx_Val  # 方程所有计算守恒残差点的损失，不参与训练
 
-    total_loss = EQsLoss + SupLoss + gEQsLoss * opts.g_weight
+    total_loss = EQsLoss + SupLoss * 10. + gEQsLoss * opts.g_weight
 
     scheduler = paddle.optimizer.lr.MultiStepDecay(0.001, [opts.epochs_adam*0.6, opts.epochs_adam*0.8], gamma=0.1)
-    optimizer = paddle.optimizer.Adam(scheduler)
+    optimizer = paddle.optimizer.Adam(scheduler, beta1=0.7, beta2=0.9)
     optimizer.minimize(total_loss)
     # optimizer.minimize(EQsLoss)
     #
@@ -148,7 +148,6 @@ def gen_all(num):
 if __name__ == '__main__':
 
     opts = get_args()
-    print(opts)
     g = 1
     v = 1e-3
     K = 1e-3
@@ -174,7 +173,7 @@ if __name__ == '__main__':
 
     # 将控制台的结果输出到a.log文件，可以改成a.txt
     sys.stdout = visual_data.Logger(os.path.join(work_path, 'train.log'), sys.stdout)
-
+    print(opts)
     sup_x, sup_u = gen_sup(opts.Nx_Sup)  # 生成监督测点
     train_x, train_u, _ = gen_all(opts.Nx_EQs)
     valid_x, valid_u, valid_g = gen_all(opts.Nx_Val)
