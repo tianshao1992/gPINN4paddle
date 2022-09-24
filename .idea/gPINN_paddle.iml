@@ -6,7 +6,7 @@
       <excludeFolder url="file://$MODULE_DIR$/git-2.28.0" />
       <excludeFolder url="file://$MODULE_DIR$/work" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.9 (base)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.9 (gPINN_paddle) (5)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
