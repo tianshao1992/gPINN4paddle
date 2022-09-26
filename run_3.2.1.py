@@ -26,14 +26,14 @@ def get_args():
     parser = argparse.ArgumentParser('PINNs for 1D Poisson model', add_help=False)
     parser.add_argument('-f', type=str, default="external")
     parser.add_argument('--net_type', default='gpinn', type=str)
-    parser.add_argument('--epochs_adam', default=60000, type=int)
-    parser.add_argument('--save_freq', default=2000, type=int, help="frequency to save model and image")
-    parser.add_argument('--print_freq', default=200, type=int, help="frequency to print loss")
+    parser.add_argument('--epochs_adam', default=30000, type=int)
+    parser.add_argument('--save_freq', default=5000, type=int, help="frequency to save model and image")
+    parser.add_argument('--print_freq', default=1000, type=int, help="frequency to print loss")
     parser.add_argument('--device', default=False, type=bool, help="use gpu")
     parser.add_argument('--work_name', default='Poisson-1D', type=str, help="save_path")
 
     parser.add_argument('--Nx_EQs', default=100, type=int)
-    parser.add_argument('--Nx_Val', default=500, type=int)
+    parser.add_argument('--Nx_Val', default=200, type=int)
     parser.add_argument('--g_weight', default=0.001, type=float)
     return parser.parse_args()
 
@@ -77,13 +77,14 @@ def build(opts, model):
 
 
     Val_var = paddle.static.data('Val_var', shape=[opts.Nx_Val, 1], dtype='float32')
-    Val_var.stop_gradient = True
+    Val_var.stop_gradient = False
     Val_tar = paddle.static.data('Val_tar', shape=[opts.Nx_Val, 1], dtype='float32')
 
     eqs, g_eqs = model.equation(EQs_var)
     val = model(Val_var)
     val = model.out_transform(Val_var, val)
     val_grad = paddle.incubate.autograd.grad(val, Val_var)
+    val_equa, _ = model.equation(Val_var)
 
     # print(fields_all)
 
@@ -98,7 +99,7 @@ def build(opts, model):
     optimizer.minimize(total_loss)
     # optimizer.minimize(EQsLoss)
     #
-    return [val, val_grad], [EQsLoss, gEQsLoss, datLoss, total_loss], scheduler
+    return [val, val_grad, val_equa], [EQsLoss, gEQsLoss, datLoss, total_loss], scheduler
 
 
 # 解析解 ve=1e-3
@@ -126,8 +127,6 @@ def gen_all(num):
 if __name__ == '__main__':
 
     opts = get_args()
-    print(opts)
-
 
     try:
         import paddle.fluid as fluid
@@ -148,6 +147,8 @@ if __name__ == '__main__':
 
     # 将控制台的结果输出到a.log文件，可以改成a.txt
     sys.stdout = visual_data.Logger(os.path.join(work_path, 'train.log'), sys.stdout)
+    print(opts)
+
 
     train_x, train_u, _ = gen_all(opts.Nx_EQs)
     valid_x, valid_u, valid_g = gen_all(opts.Nx_Val)
@@ -157,7 +158,7 @@ if __name__ == '__main__':
 
     planes = [1, ] + [20, ] * 3 + [1, ]
     Net_model = Net_single(planes=planes, active=nn.Tanh())
-    [U_pred, U_grad], Loss, Scheduler = build(opts, Net_model)
+    [U_pred, U_grad, U_eqs], Loss, Scheduler = build(opts, Net_model)
 
     exe = static.Executor(place)
     exe.run(static.default_startup_program())
@@ -175,23 +176,24 @@ if __name__ == '__main__':
 
         if epoch > 0 and epoch % opts.print_freq == 0:
             all_items = exe.run(prog, feed={'EQs_var': train_x, 'Val_var': valid_x, 'Val_tar': valid_u},
-                                fetch_list=[[U_pred, U_grad] + Loss[:-1]])
+                                fetch_list=[[U_pred, U_grad, U_eqs] + Loss[:-1]])
 
             u_pred = all_items[0]
             u_grad = all_items[1]
-            loss_items = all_items[2:]
+            u_eqs = all_items[2]
+            loss_items = all_items[3:]
 
             log_loss.append(np.array(loss_items).squeeze())
 
             print('iter: {:6d}, lr: {:.1e}, cost: {:.2f}, val_loss: {:.2e}, Eqs_loss: {:.2e}, Grad_loss: {:.2e}'.
-                  format(epoch, Scheduler.get_lr(), time.time() - star_time, float(loss_items[-2]),
+                  format(epoch, Scheduler.get_lr(), time.time() - star_time, float(loss_items[-1]),
                          float(loss_items[0]), float(loss_items[1])))
             star_time = time.time()
             # print(np.array(par_pred).shape)
         if epoch > 0 and epoch % opts.save_freq == 0:
             plt.figure(1, figsize=(20, 10))
             plt.clf()
-            Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, -2], 'dat_loss')
+            Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, -1], 'dat_loss')
             Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 0], 'eqs_loss')
             if "gpinn" in opts.net_type:
                 Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 1], 'grad_loss')
@@ -218,7 +220,7 @@ if __name__ == '__main__':
 
             paddle.save({'log_loss': log_loss,
                          'valid_x': valid_x, 'valid_u': valid_u, 'valid_g': valid_g,
-                         'u_pred': u_pred, 'u_grad': u_grad,
+                         'u_pred': u_pred, 'u_grad': u_grad, 'u_eqs': u_eqs,
                          }, os.path.join(work_path, 'out_res.pth'), )
     paddle.save(prog.state_dict(), os.path.join(work_path, 'latest_model.pdparams'), )
     time.sleep(3)

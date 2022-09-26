@@ -33,7 +33,7 @@ def get_args():
     parser.add_argument('--work_name', default='Brinkman-Forchheimer-2', type=str, help="save_path")
 
     parser.add_argument('--Nx_EQs', default=30, type=int)
-    parser.add_argument('--Nx_Sup', default=8, type=int)
+    parser.add_argument('--Nx_Sup', default=5, type=int)
     parser.add_argument('--Nx_Val', default=500, type=int)
     parser.add_argument('--g_weight', default=0.1, type=float)
     return parser.parse_args()
@@ -68,8 +68,9 @@ class Net_single(DeepModel_single):
 
         eqs = -1 / e * d2udx2 * self.get_v_e + v * out_var / self.get_K - g
         if 'gpinn' in opts.net_type:
-            d3udx3 = paddle.incubate.autograd.grad(d2udx2, inn_var)
-            g_eqs = -1 / e * d3udx3 * self.get_v_e + v * dudx / self.get_K
+            # d3udx3 = paddle.incubate.autograd.grad(d2udx2, inn_var)
+            # g_eqs = -1 / e * d3udx3 * self.get_v_e + v * dudx / self.get_K
+            g_eqs = paddle.incubate.autograd.grad(eqs, inn_var)
         else:
             g_eqs = paddle.zeros((1,), dtype=paddle.float32)
 
@@ -79,14 +80,9 @@ class Net_single(DeepModel_single):
 def build(opts, model):
     ## 采样
 
-    # print(out_BCs)
-
     EQs_var = paddle.static.data('EQs_var', shape=[opts.Nx_EQs, 1], dtype='float32')
     EQs_var.stop_gradient = False
     # EQs_tar = paddle.static.data('EQs_tar', shape=[opts.Nx_EQs, 1], dtype='float32')
-    BCs_var = paddle.static.data('BCs_var', shape=[2, 1], dtype='float32')
-    BCs_var.stop_gradient = True
-    BCs_tar = paddle.static.data('BCs_tar', shape=[2, 1], dtype='float32')
 
     Sup_var = paddle.static.data('Sup_var', shape=[opts.Nx_Sup, 1], dtype='float32')
     Sup_var.stop_gradient = True
@@ -99,8 +95,6 @@ def build(opts, model):
     eqs, g_eqs = model.equation(EQs_var)
     sup = model(Sup_var)
     sup = model.out_transform(Sup_var, sup)
-    bcs = model(BCs_var)
-    bcs = model.out_transform(BCs_var, bcs)
     val = model(Val_var)
     val = model.out_transform(Val_var, val)
     val_grad = paddle.incubate.autograd.grad(val, Val_var)
@@ -108,17 +102,16 @@ def build(opts, model):
     EQsLoss = paddle.norm(eqs, p=2) ** 2 / opts.Nx_EQs  # 方程所有计算守恒残差点的损失，不参与训练
     gEQsLoss = paddle.norm(g_eqs, p=2) ** 2 / opts.Nx_EQs  # 方程所有计算守恒残差点的损失，不参与训练
     SupLoss = paddle.norm(Sup_tar - sup, p=2) ** 2 / opts.Nx_Sup  # 方程所有计算守恒残差点的损失，不参与训练
-    BCsLoss = paddle.norm(BCs_tar - bcs, p=2) ** 2 / 2
     datLoss = paddle.norm(Val_tar - val, p=2) ** 2 / opts.Nx_Val  # 方程所有计算守恒残差点的损失，不参与训练
 
-    total_loss = EQsLoss + SupLoss * 10. + gEQsLoss * opts.g_weight
+    total_loss = EQsLoss + SupLoss + gEQsLoss * opts.g_weight
 
-    scheduler = paddle.optimizer.lr.MultiStepDecay(0.001, [opts.epochs_adam*0.6, opts.epochs_adam*0.8], gamma=0.1)
-    optimizer = paddle.optimizer.Adam(scheduler, beta1=0.7, beta2=0.9)
+    scheduler = paddle.optimizer.lr.MultiStepDecay(0.001, [opts.epochs_adam*0.8, opts.epochs_adam*0.9], gamma=0.1)
+    optimizer = paddle.optimizer.Adam(scheduler, beta1=0.8, beta2=0.9)
     optimizer.minimize(total_loss)
     # optimizer.minimize(EQsLoss)
     #
-    return [val, val_grad], [EQsLoss, BCsLoss, SupLoss, gEQsLoss, datLoss, total_loss], scheduler
+    return [val, val_grad], [EQsLoss, SupLoss, gEQsLoss, datLoss, total_loss], scheduler
 
 
 # 解析解 ve=1e-3
@@ -177,8 +170,6 @@ if __name__ == '__main__':
     sup_x, sup_u = gen_sup(opts.Nx_Sup)  # 生成监督测点
     train_x, train_u, _ = gen_all(opts.Nx_EQs)
     valid_x, valid_u, valid_g = gen_all(opts.Nx_Val)
-    bcs_x, bcs_u = train_x[[0, -1]], train_u[[0, -1]]
-
     paddle.incubate.autograd.enable_prim()
 
     planes = [1, ] + [20, ] * 3 + [1, ]
@@ -198,12 +189,12 @@ if __name__ == '__main__':
     for epoch in range(start_epoch, 1+opts.epochs_adam):
         ## 采样
         Scheduler.step()
-        exe.run(prog, feed={'EQs_var': train_x, 'BCs_var': bcs_x, 'BCs_tar': bcs_u, 'Sup_var': sup_x, 'Sup_tar': sup_u,
+        exe.run(prog, feed={'EQs_var': train_x, 'Sup_var': sup_x, 'Sup_tar': sup_u,
                             'Val_var': valid_x, 'Val_tar': valid_u}, fetch_list=[Loss[-1]])
 
         if epoch > 0 and epoch % opts.print_freq == 0:
-            all_items = exe.run(prog, feed={'EQs_var': train_x, 'BCs_var': bcs_x, 'BCs_tar': bcs_u, 'Sup_var': sup_x,
-                                            'Sup_tar': sup_u, 'Val_var': valid_x, 'Val_tar': valid_u},
+            all_items = exe.run(prog, feed={'EQs_var': train_x, 'Sup_var': sup_x, 'Sup_tar': sup_u,
+                                            'Val_var': valid_x, 'Val_tar': valid_u},
                                 fetch_list=[[U_pred, U_grad, Net_model.get_v_e, Net_model.get_K] + Loss[:-1]])
 
             u_pred = all_items[0]
@@ -216,9 +207,9 @@ if __name__ == '__main__':
             par_pred.append(np.array([v_e_pred, K_pred]))
             # print(loss_items[1:])
             print('iter: {:6d}, lr: {:.1e}, cost: {:.2f}, val_loss: {:.2e}, v_e_pred: {:.2e}, K_pred: {:.2e}\n'
-                  'EQs_loss: {:.2e}, BCS_loss: {:.2e}, Sup_loss: {:.2e}, Grad_loss: {:.2e}'.
+                  'EQs_loss: {:.2e}, Sup_loss: {:.2e}, Grad_loss: {:.2e}'.
                   format(epoch, 0.001, time.time() - star_time, float(loss_items[-1]), float(v_e_pred), float(K_pred),
-                         float(loss_items[0]), float(loss_items[1]), float(loss_items[2]), float(loss_items[3])))
+                         float(loss_items[0]), float(loss_items[1]), float(loss_items[2])))
             star_time = time.time()
             # print(np.array(par_pred).shape)
         if epoch > 0 and epoch % opts.save_freq == 0:
@@ -226,10 +217,9 @@ if __name__ == '__main__':
             plt.clf()
             Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, -1], 'dat_loss')
             Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 0], 'eqs_loss')
-            # Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 1], 'BCS_loss')
-            Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 2], 'sup_loss')
+            Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 1], 'sup_loss')
             if 'gpinn' in opts.net_type:
-                Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 3], 'grad_loss')
+                Visual.plot_loss(np.arange(len(log_loss)), np.array(log_loss)[:, 2], 'grad_loss')
             plt.savefig(os.path.join(tran_path, 'log_loss.svg'))
 
             plt.figure(1, figsize=(10, 8))

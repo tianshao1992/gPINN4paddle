@@ -95,6 +95,7 @@ for N in Ns:
     plt.plot(sup_x, sup_u, c='k', marker='s', label='Observed')
     plt.xlabel('x')
     plt.ylabel('u')
+    plt.rcParams['font.size'] = 20
     plt.legend(frameon=False)
     plt.savefig(vald_path + '/Fig6_D-N' + str(opts.Nx_EQs) + '.jpg')
 
@@ -105,6 +106,7 @@ for N in Ns:
     Visual.plot_loss(np.arange(len(log_par[-1])), np.array(log_par)[-1], label='GPINN')
     plt.xlabel('Epoch')
     plt.ylabel('v_e')
+    plt.rcParams['font.size'] = 20
     plt.savefig(vald_path + '/Fig6_E-N' + str(opts.Nx_EQs) + '.jpg')
 
 plt.figure(1, figsize=(8, 6))
@@ -113,6 +115,7 @@ Visual.plot_loss(np.arange(len(Ns)), np.array(log_err)[::2, 0], label='PINN')
 Visual.plot_loss(np.arange(len(Ns)), np.array(log_err)[1::2, 0], label='GPINN')
 plt.xlabel('No. of pde training points')
 plt.ylabel('Relative l2 error of v_e')
+plt.rcParams['font.size'] = 20
 plt.savefig(vald_path + '/Fig6_A.jpg')
 
 plt.figure(2, figsize=(8, 6))
