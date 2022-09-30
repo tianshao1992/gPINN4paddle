@@ -59,9 +59,11 @@
     Nt_Val、Nx_Val分别指代采用验证数据时在时间t（如果存在）以及x方向的采样点个数（均匀网格）；
 
     g_weight为gradient ehanced的残差权重，即下式的$w_{g_i}$。
+    
     $
     \mathcal{L}=w_f \mathcal{L}_f+w_b \mathcal{L}_b+w_i \mathcal{L}_i+\sum_{i=1}^d w_{g_i} \mathcal{L}_{g_i}\left(\boldsymbol{\theta} ; \mathcal{T}_{g_i}\right)
     $
+    
     其中，$L_f、L_b、L_i$为PDE残差、边界条件、初始条件损失，权重均默认为1，后两者由于采用了hard constraints因此均为0。
 
   - **fig文件夹**中为原始论文结果相关图片以及作者复现所整理的对应结果，**work文件夹**中为训练过程及中间结果
@@ -90,17 +92,23 @@
 ### 4.1 正向问题 
 
 1).原始方程为1-D Poisson方程：
-$
+
+$$
 -\Delta u=\sum_{i=1}^4 i \sin (i x)+8 \sin (8 x), \quad x \in[0, \pi]
-$
+$$
+
 方程解析解为
-$
+
+$$
 u(x)=x+\sum_{i=1}^4 \frac{\sin (i x)}{i}+\frac{\sin (8 x)}{8}
-$
+$$
+
 损失函数为
-$
+
+$$
 \mathcal{L}=\mathcal{L}_f+w \mathcal{L}_g
-$
+$$
+
 1D Possion （对应文章 3.2.1 Figure 2）详细代码见run_3.2.1.py 以及train_3.2.1.sh 设置不同的traning points——Nx_EQs以及权重w。（误差带为运行10次求取均值以及方差绘制，以下类似。）
 下表详细展示了采用GPINN对1D Possion问题的预测效果，以及不同权重、不同训练点数量对于GPINN的影响。其中，左侧为本次复现结果，而右侧为论文结果。需要指出，复现的结果中PINNs以及gPINNs均较原始论文更好，其中GPINNs 权重为1.0时效果尤其明显。
 
@@ -117,22 +125,28 @@ $
 | Figure 2 G |   ![ ](fig/1D_Possion/Fig2_G.jpg)   | ![ ](fig/Fig2_G.jpg)  |
 
 2).原始方程为2-D Poisson方程：
-$
-\frac{\partial u}{\partial t}=D \frac{\partial^2 u}{\partial x^2}+R(x, t), \quad x \in[-\pi, \pi], t \in[0,1]
-$
-其中源项：
-$
-R(x, t)=e^{-t}\left[\frac{3}{2} \sin (2 x)+\frac{8}{3} \sin (3 x)+\frac{15}{4} \sin (4 x)+\frac{63}{8} \sin (8 x)\right]
-$
-方程解析解为
-$
-u(x, t)=e^{-t}\left[\sum_{i=1}^4 \frac{\sin (i x)}{i}+\frac{\sin (8 x)}{8}\right]
-$
-损失函数为
-$
-\mathcal{L}=\mathcal{L}_f+w \mathcal{L}_{g_x}+w \mathcal{L}_{g_t}
-$
 
+$$
+\frac{\partial u}{\partial t}=D \frac{\partial^2 u}{\partial x^2}+R(x, t), \quad x \in[-\pi, \pi], t \in[0,1]
+$$
+
+其中源项：
+
+$$
+R(x, t)=e^{-t}\left[\frac{3}{2} \sin (2 x)+\frac{8}{3} \sin (3 x)+\frac{15}{4} \sin (4 x)+\frac{63}{8} \sin (8 x)\right]
+$$
+
+方程解析解为
+
+$$
+u(x, t)=e^{-t}\left[\sum_{i=1}^4 \frac{\sin (i x)}{i}+\frac{\sin (8 x)}{8}\right]
+$$
+
+损失函数为
+
+$$
+\mathcal{L}=\mathcal{L}_f+w \mathcal{L}_{g_x}+w \mathcal{L}_{g_t}
+$$
 
 2D Possion （对应文章 3.2.2），详细代码见run_3.2.2.py 以及train_3.2.2.sh 设置不同的Nx_EQs以及权重w。
 
@@ -146,13 +160,17 @@ $
 
 ### 4.2 反向问题 
 原始方程为1-DBrinkman-Forchheimer方程：
+
 $$
 -\frac{\nu_e}{\epsilon} \nabla^2 u+\frac{\nu u}{K}=g, \quad x \in[0, H]
 $$
+
 解析解为：
+
 $$
 u(x)=\frac{g K}{\nu}\left[1-\frac{\cosh \left(r\left(x-\frac{H}{2}\right)\right)}{\cosh \left(\frac{r H}{2}\right)}\right]
 $$
+
 此外，本问题中还需识别模型的粘度$\nu_e$以及渗透性$K$。
 
 1).仅预测Brinkman-Forchheimer 模型的粘度$\nu_e$，详细代码见run_3.3.1.py 以及train_3.3.1.sh 设置不同的traning points——Nx_EQs。
@@ -177,13 +195,17 @@ $$
 
 ### 4.3 RAR 方法
 原始方程为2D-Burgers方程：
-$
+
+$$
 \frac{\partial u}{\partial t}+u \frac{\partial u}{\partial x}=\nu \frac{\partial^2 u}{\partial x^2}, \quad x \in[-1,1], t \in[0,1]
-$
+$$
+
 初始条件、边界条件为：
-$
+
+$$
 u(x, 0)=-\sin (\pi x), \quad u(-1, t)=u(1, t)=0
-$
+$$
+
 其数值解作者在论文github中已提供https://github.com/lu-group/gpinn。
 
 1).综合对比，详细代码见run_3.4.1.py 以及train_3.4.1.sh 设置不同的training points——Nx_EQs以及net_type。
@@ -269,7 +291,6 @@ def equation(self, inn_var):
 
         return out_var, eqs, g_eqs
 ```
-
 
 
 ## 7.模型信息
