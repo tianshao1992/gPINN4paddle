@@ -58,13 +58,13 @@
 
     Nt_Val、Nx_Val分别指代采用验证数据时在时间t（如果存在）以及x方向的采样点个数（均匀网格）；
 
-    g_weight为gradient ehanced的残差权重，即下式的$w_{g_i}$。
+    g_weight为gradient ehanced的残差权重，即下式的 $w_{g_i}$ 。
     
-    $
+    $$
     \mathcal{L}=w_f \mathcal{L}_f+w_b \mathcal{L}_b+w_i \mathcal{L}_i+\sum_{i=1}^d w_{g_i} \mathcal{L}_{g_i}\left(\boldsymbol{\theta} ; \mathcal{T}_{g_i}\right)
-    $
+    $$
     
-    其中，$L_f、L_b、L_i$为PDE残差、边界条件、初始条件损失，权重均默认为1，后两者由于采用了hard constraints因此均为0。
+    其中， $L_f、L_b、L_i$ 为PDE残差、边界条件、初始条件损失，权重均默认为1，后两者由于采用了hard constraints因此均为0。
 
   - **fig文件夹**中为原始论文结果相关图片以及作者复现所整理的对应结果，**work文件夹**中为训练过程及中间结果
 
@@ -171,19 +171,19 @@ $$
 u(x)=\frac{g K}{\nu}\left[1-\frac{\cosh \left(r\left(x-\frac{H}{2}\right)\right)}{\cosh \left(\frac{r H}{2}\right)}\right]
 $$
 
-此外，本问题中还需识别模型的粘度$\nu_e$以及渗透性$K$。
+此外，本问题中还需识别模型的粘度 $\nu_e$ 以及渗透性 $K$ 。
 
-1).仅预测Brinkman-Forchheimer 模型的粘度$\nu_e$，详细代码见run_3.3.1.py 以及train_3.3.1.sh 设置不同的traning points——Nx_EQs。
+1).仅预测Brinkman-Forchheimer 模型的粘度 $\nu_e$ ，详细代码见run_3.3.1.py 以及train_3.3.1.sh 设置不同的traning points——Nx_EQs。
 
 需要指出复现结果中，gPINN相对于PINN在训练样本点较少时优势明显，但随着训练样本增多时，gPINN优势并不明显。
 
 |      |  复现  | 论文 |
 | :--: | :------------: | :------: |
-| Figure 6 A |   ![ ](fig/BF1/Fig6_A.jpg)   | ![ ](fig/Fig6_A.jpg)  |
-| Figure 6 B |   ![ ](fig/BF1/Fig6_B.jpg)   | ![ ](fig/Fig6_B.jpg)  |
-| Figure 6 C |   ![ ](fig/BF1/Fig6_C.jpg)   | ![ ](fig/Fig6_C.jpg)  |
-| Figure 6 D |   ![ ](fig/BF1/Fig6_D.jpg)   | ![ ](fig/Fig6_D.jpg)  |
-| Figure 6 E |   ![ ](fig/BF1/Fig6_E.jpg)   | ![ ](fig/Fig6_E.jpg)  |
+| Figure 6 A |   ![ ](./fig/BF1/Fig6_A.jpg)   | ![ ](fig/Fig6_A.jpg)  |
+| Figure 6 B |   ![ ](./fig/BF1/Fig6_B.jpg)   | ![ ](fig/Fig6_B.jpg)  |
+| Figure 6 C |   ![ ](./fig/BF1/Fig6_C.jpg)   | ![ ](fig/Fig6_C.jpg)  |
+| Figure 6 D |   ![ ](./fig/BF1/Fig6_D.jpg)   | ![ ](fig/Fig6_D.jpg)  |
+| Figure 6 E |   ![ ](./fig/BF1/Fig6_E.jpg)   | ![ ](fig/Fig6_E.jpg)  |
 
 2).同时预测Brinkman-Forchheimer 模型的粘度$\nu_e$和渗透性$K$。需要指出，本复现结果中，在traning points Nx_EQs取10时，二者的结果差距并不明显。
 
