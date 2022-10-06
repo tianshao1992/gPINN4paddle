@@ -126,9 +126,9 @@ $$
 
 2).原始方程为2-D Poisson方程：
 
-$
+$$
 \frac{\partial u}{\partial t}=D \frac{\partial^2 u}{\partial x^2}+R(x, t), \quad x \in[-\pi, \pi], t \in[0,1]
-$
+$$
 
 其中源项：
 
