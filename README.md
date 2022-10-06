@@ -58,10 +58,12 @@
 
     Nt_Val、Nx_Val分别指代采用验证数据时在时间t（如果存在）以及x方向的采样点个数（均匀网格）；
 
-    g_weight为gradient ehanced的残差权重，即下式的$w_{g_i}$。
+    g_weight为gradient ehanced的残差权重，即下式的 $w_{g_i}$ 。\
+    
     $
     \mathcal{L}=w_f \mathcal{L}_f+w_b \mathcal{L}_b+w_i \mathcal{L}_i+\sum_{i=1}^d w_{g_i} \mathcal{L}_{g_i}\left(\boldsymbol{\theta} ; \mathcal{T}_{g_i}\right)
     $
+    
     其中，$L_f、L_b、L_i$为PDE残差、边界条件、初始条件损失，权重均默认为1，后两者由于采用了hard constraints因此均为0。
 
   - **fig文件夹**中为原始论文结果相关图片以及作者复现所整理的对应结果，**work文件夹**中为训练过程及中间结果
