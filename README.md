@@ -58,13 +58,11 @@
 
     Nt_Val、Nx_Val分别指代采用验证数据时在时间t（如果存在）以及x方向的采样点个数（均匀网格）；
 
-    g_weight为gradient ehanced的残差权重，即下式的 $w_{g_i}$ 。
-    
-    $$
+    g_weight为gradient ehanced的残差权重，即下式的$w_{g_i}$。
+    $
     \mathcal{L}=w_f \mathcal{L}_f+w_b \mathcal{L}_b+w_i \mathcal{L}_i+\sum_{i=1}^d w_{g_i} \mathcal{L}_{g_i}\left(\boldsymbol{\theta} ; \mathcal{T}_{g_i}\right)
-    $$
-    
-    其中， $L_f、L_b、L_i$ 为PDE残差、边界条件、初始条件损失，权重均默认为1，后两者由于采用了hard constraints因此均为0。
+    $
+    其中，$L_f、L_b、L_i$为PDE残差、边界条件、初始条件损失，权重均默认为1，后两者由于采用了hard constraints因此均为0。
 
   - **fig文件夹**中为原始论文结果相关图片以及作者复现所整理的对应结果，**work文件夹**中为训练过程及中间结果
 
@@ -93,21 +91,21 @@
 
 1).原始方程为1-D Poisson方程：
 
-$$
+$
 -\Delta u=\sum_{i=1}^4 i \sin (i x)+8 \sin (8 x), \quad x \in[0, \pi]
-$$
+$
 
 方程解析解为
 
-$$
+$
 u(x)=x+\sum_{i=1}^4 \frac{\sin (i x)}{i}+\frac{\sin (8 x)}{8}
-$$
+$
 
 损失函数为
 
-$$
+$
 \mathcal{L}=\mathcal{L}_f+w \mathcal{L}_g
-$$
+$
 
 1D Possion （对应文章 3.2.1 Figure 2）详细代码见run_3.2.1.py 以及train_3.2.1.sh 设置不同的traning points——Nx_EQs以及权重w。（误差带为运行10次求取均值以及方差绘制，以下类似。）
 下表详细展示了采用GPINN对1D Possion问题的预测效果，以及不同权重、不同训练点数量对于GPINN的影响。其中，左侧为本次复现结果，而右侧为论文结果。需要指出，复现的结果中PINNs以及gPINNs均较原始论文更好，其中GPINNs 权重为1.0时效果尤其明显。
@@ -116,95 +114,93 @@ $$
 
 |      |  复现  | 论文 |
 | :--: | :------------: | :------: |
-| Figure 2 A |   ![ ](fig/1D_Possion/Fig2_A.jpg)   | ![ ](fig/Fig2_A.jpg)  |
-| Figure 2 B |   ![ ](fig/1D_Possion/Fig2_B.jpg)   | ![ ](fig/Fig2_B.jpg)  |
-| Figure 2 C |   ![ ](fig/1D_Possion/Fig2_C.jpg)   | ![ ](fig/Fig2_C.jpg)  |
-| Figure 2 D |   ![ ](fig/1D_Possion/Fig2_D.jpg)   | ![ ](fig/Fig2_D.jpg)  |
-| Figure 2 E |   ![ ](fig/1D_Possion/Fig2_E.jpg)   | ![ ](fig/Fig2_E.jpg)  |
-| Figure 2 F |   ![ ](fig/1D_Possion/Fig2_F.jpg)   | ![ ](fig/Fig2_F.jpg)  |
-| Figure 2 G |   ![ ](fig/1D_Possion/Fig2_G.jpg)   | ![ ](fig/Fig2_G.jpg)  |
+| Figure 2 A |![](https://ai-studio-static-online.cdn.bcebos.com/2b6d12bb61a942669cb6e3e1d7646468f4d0be21ea094ca5a924959bea60f617)|![](https://ai-studio-static-online.cdn.bcebos.com/e388ebec43184e6cb753531f8ffda619ce1606d38c67417da736ec73bffa4c56)|
+| Figure 2 B |![](https://ai-studio-static-online.cdn.bcebos.com/1d49151e46f743718ed6a79f8358e56a5fdbaf289c85446dac21ad87d03ee128)|![](https://ai-studio-static-online.cdn.bcebos.com/5dc2d060cd3b4cf1aedf6eaa7314756361899eaa54b34244b89b60a0ff1c8e7c)|
+| Figure 2 C |![](https://ai-studio-static-online.cdn.bcebos.com/171bd98c445a4af99c3e31b6148eb517f795b2047d8640098d66d291312a8f4c)|![](https://ai-studio-static-online.cdn.bcebos.com/0ff6140f3d65448089e92cc224911942fae9b4cc1147497cb25133fa59ce61d9)|
+| Figure 2 D |![](https://ai-studio-static-online.cdn.bcebos.com/28f5843feadc4fd188fcbe643e11899d9859a9b3d40644a3896f0f5d948f8608)|![](https://ai-studio-static-online.cdn.bcebos.com/0fca0a25e6a543d095cb67ebc12fc386386e6fd93bf84ccbb976ce2a7cb0f09f)|
+| Figure 2 E |![](https://ai-studio-static-online.cdn.bcebos.com/967d1c6a143c4d83b558a15808216eccd3ea908bd3e944a598c13bf0f68ed72d)|![](https://ai-studio-static-online.cdn.bcebos.com/24692bfdcc6f4fb19898554feaefd111d234386f669e4b4ea13a1ce68e542532)|
+| Figure 2 F |![](https://ai-studio-static-online.cdn.bcebos.com/244eeff8c354471092333d57dfb8d2d5fa96706024cd43708a677725252e6c74)|![](https://ai-studio-static-online.cdn.bcebos.com/641292b71d264b98b024261112fa1356296a82eae8e84bd29ed6a2a02159756f)|
+| Figure 2 G |![](https://ai-studio-static-online.cdn.bcebos.com/eff151ebeed046d28910628ffda742397a37f0ccdcb9437cb02f10bde8ab2497)|![](https://ai-studio-static-online.cdn.bcebos.com/956db99226804e01aa99a0d871ab395dca79027a48cc4cbb885ad779c48dd960)|
 
 2).原始方程为2-D Poisson方程：
 
-$$
+$
 \frac{\partial u}{\partial t}=D \frac{\partial^2 u}{\partial x^2}+R(x, t), \quad x \in[-\pi, \pi], t \in[0,1]
-$$
+$
 
 其中源项：
 
-$$
+$
 R(x, t)=e^{-t}\left[\frac{3}{2} \sin (2 x)+\frac{8}{3} \sin (3 x)+\frac{15}{4} \sin (4 x)+\frac{63}{8} \sin (8 x)\right]
-$$
+$
 
 方程解析解为
 
-$$
+$
 u(x, t)=e^{-t}\left[\sum_{i=1}^4 \frac{\sin (i x)}{i}+\frac{\sin (8 x)}{8}\right]
-$$
+$
 
 损失函数为
 
-$$
+$
 \mathcal{L}=\mathcal{L}_f+w \mathcal{L}_{g_x}+w \mathcal{L}_{g_t}
-$$
+$
+
 
 2D Possion （对应文章 3.2.2），详细代码见run_3.2.2.py 以及train_3.2.2.sh 设置不同的Nx_EQs以及权重w。
 
 
-|      |  论文  | 复现 |
+|      |  复现  | 论文 |
 | :--: | :------------: | :------: |
-| Figure 3 A |   ![ ](fig/2D_Possion/Fig3_A.jpg)   | ![ ](fig/Fig3_A.jpg)  |
-| Figure 3 B |   ![ ](fig/2D_Possion/Fig3_B.jpg)   | ![ ](fig/Fig3_B.jpg)  |
-| Figure 3 C |   ![ ](fig/2D_Possion/Fig3_C.jpg)   | ![ ](fig/Fig3_C.jpg)  |
-| Figure 3 D |   ![ ](fig/2D_Possion/Fig3_D.jpg)   | ![ ](fig/Fig3_D.jpg)  |
+| Figure 3 A |![](https://ai-studio-static-online.cdn.bcebos.com/803be944194e4460b4f6918f9d3a67832eca00a218af4ac0bec0601a71f7fa8c)|![](https://ai-studio-static-online.cdn.bcebos.com/91c2d5958e9f4f3095f1653c4ebca2c232e05caf5c05400bab1dd45a744dd46c)|
+| Figure 3 B |![](https://ai-studio-static-online.cdn.bcebos.com/5243ea884e754d25818b6b401aa2adaf1971fe72b2674822934d517486f6d4cc)|![](https://ai-studio-static-online.cdn.bcebos.com/491a8266edec44a8a546a010a9ba0363d85e9118d7124de980d542cd6e54d797)|
+| Figure 3 C |![](https://ai-studio-static-online.cdn.bcebos.com/2b9921cdfea843cd8fc598c069ab128aeb7642a2a7424efa9b022f0fc19bec9f)|![](https://ai-studio-static-online.cdn.bcebos.com/58e961f4bb1e417f93b9edde171479404f6bd42d67f245d390eb591975270178)|
+| Figure 3 D |![](https://ai-studio-static-online.cdn.bcebos.com/497212ad54c64910ab9373b5f585e919466d4a5b3f28467f8713e0d38b204795)|![](https://ai-studio-static-online.cdn.bcebos.com/b29e60792dd3443b8f1f8edc379ac5ba39319f78eb474e8fa3bebb9e7a7191e7)|
+
 
 ### 4.2 反向问题 
 原始方程为1-DBrinkman-Forchheimer方程：
-
 $$
 -\frac{\nu_e}{\epsilon} \nabla^2 u+\frac{\nu u}{K}=g, \quad x \in[0, H]
 $$
-
 解析解为：
-
 $$
 u(x)=\frac{g K}{\nu}\left[1-\frac{\cosh \left(r\left(x-\frac{H}{2}\right)\right)}{\cosh \left(\frac{r H}{2}\right)}\right]
 $$
+此外，本问题中还需识别模型的粘度$\nu_e$以及渗透性$K$。
 
-此外，本问题中还需识别模型的粘度 $\nu_e$ 以及渗透性 $K$ 。
-
-1).仅预测Brinkman-Forchheimer 模型的粘度 $\nu_e$ ，详细代码见run_3.3.1.py 以及train_3.3.1.sh 设置不同的traning points——Nx_EQs。
+1).仅预测Brinkman-Forchheimer 模型的粘度$\nu_e$，详细代码见run_3.3.1.py 以及train_3.3.1.sh 设置不同的traning points——Nx_EQs。
 
 需要指出复现结果中，gPINN相对于PINN在训练样本点较少时优势明显，但随着训练样本增多时，gPINN优势并不明显。
 
 |      |  复现  | 论文 |
 | :--: | :------------: | :------: |
-| Figure 6 A |   ![ ](./fig/BF1/Fig6_A.jpg)   | ![ ](fig/Fig6_A.jpg)  |
-| Figure 6 B |   ![ ](./fig/BF1/Fig6_B.jpg)   | ![ ](fig/Fig6_B.jpg)  |
-| Figure 6 C |   ![ ](./fig/BF1/Fig6_C.jpg)   | ![ ](fig/Fig6_C.jpg)  |
-| Figure 6 D |   ![ ](./fig/BF1/Fig6_D.jpg)   | ![ ](fig/Fig6_D.jpg)  |
-| Figure 6 E |   ![ ](./fig/BF1/Fig6_E.jpg)   | ![ ](fig/Fig6_E.jpg)  |
+| Figure 6 A |![](https://ai-studio-static-online.cdn.bcebos.com/fe34ded30fa9401799a77c104a9b8a1b95cb501089dd4c019833fa8aea5b1911#pic_center=100x100)|![](https://ai-studio-static-online.cdn.bcebos.com/002f8297e8d8484c89cd06f57ae4110b611f5703d50e44558bbf3d0ccd6c545c)|
+| Figure 6 B |![](https://ai-studio-static-online.cdn.bcebos.com/3988dad934fd42bea1fdf518fc011770f92e263a83f042bc8d23273e48012ae3#pic_center=100x100)|![](https://ai-studio-static-online.cdn.bcebos.com/0229368a271a4d069bacffa8871ad4f0b509ea4c02dc42d397f3b3354d8c6912)|
+| Figure 6 C |![](https://ai-studio-static-online.cdn.bcebos.com/dc136d8d6c3d412ba6668b7d21ca923c07007324d45a4df390ea0f9c4d89ac52#pic_center=100x100)|![](https://ai-studio-static-online.cdn.bcebos.com/cc8bbc4a315a42db84af156723999c8a9ed6f8fef44e44328e4a6f9b150dee83)|
+| Figure 6 D |![](https://ai-studio-static-online.cdn.bcebos.com/ebc45345c8eb45f39562e917d274e06c19e8e2a06fc147a59b991333ba337153#pic_center=100x100)|![](https://ai-studio-static-online.cdn.bcebos.com/da17a7d7b49c4b459b0a155168c51b95ee5caf83eb3f4d709c125d950f324b8e)|
+| Figure 6 E |![](https://ai-studio-static-online.cdn.bcebos.com/7e0cdcc47e804d9abea13d88d623e03cca76fabb4c184005861ee5282319bb68#pic_center=100x100)|![](https://ai-studio-static-online.cdn.bcebos.com/4ca7d3921b3743e0a1f5ddceede2cde4957fd6ce3856414d87b262318bd4257e)|
 
 2).同时预测Brinkman-Forchheimer 模型的粘度$\nu_e$和渗透性$K$。需要指出，本复现结果中，在traning points Nx_EQs取10时，二者的结果差距并不明显。
 
 |      |  复现  | 论文 |
 | :--: | :------------: | :------: |
-| Figure 7 A |   ![ ](fig/BF2/Fig7_A10.jpg)   | ![ ](fig/Fig7_A.jpg)  |
-| Figure 7 B |   ![ ](fig/BF2/Fig7_B10.jpg)   | ![ ](fig/Fig7_B.jpg)  |
-| Figure 7 C |   ![ ](fig/BF2/Fig7_C10.jpg)   | ![ ](fig/Fig7_C.jpg)  |
+| Figure 7 A |![](https://ai-studio-static-online.cdn.bcebos.com/349571080603401382731c9a697d9092c0ede25319f84d31a72922f51e141370)|![](https://ai-studio-static-online.cdn.bcebos.com/2cb12165a9e84a4d8b780523beb45ae899c03a25fc364ca5a25864c4edcf831f)|
+| Figure 7 B |![](https://ai-studio-static-online.cdn.bcebos.com/e367a42c582743678d1e99519a80e69753b32501c09742bfae0e4504d67a3958)|![](https://ai-studio-static-online.cdn.bcebos.com/7e665a375644404bae03e1e294e848d15d7e81cdd4d3498ca9fc8174a66b91f9)|
+| Figure 7 C |![](https://ai-studio-static-online.cdn.bcebos.com/3a9fd034a8c843adafbb921a2b808341d1c7e770ab0c4cd88607c8da256e3bb9)|![](https://ai-studio-static-online.cdn.bcebos.com/7e4e32360c5541f4a41b99906edae6d93385e19a51f94e4f89ed7e7de4d4dc63)|
 
 ### 4.3 RAR 方法
-原始方程为2D-Burgers方程：
+原始方程为2D-Burgers方程： 
 
-$$
+$
 \frac{\partial u}{\partial t}+u \frac{\partial u}{\partial x}=\nu \frac{\partial^2 u}{\partial x^2}, \quad x \in[-1,1], t \in[0,1]
-$$
+$
 
 初始条件、边界条件为：
 
-$$
+$
 u(x, 0)=-\sin (\pi x), \quad u(-1, t)=u(1, t)=0
-$$
+$
 
 其数值解作者在论文github中已提供https://github.com/lu-group/gpinn。
 
@@ -212,33 +208,35 @@ $$
 
 |      |  复现  | 论文 |
 | :--: | :------------: | :------: |
-| 对比 |   ![](fig/gpinn_rar/Fig10_err_eqs.jpg)   | ![](fig/Fig10.jpg)  |
+| 对比 |![](https://ai-studio-static-online.cdn.bcebos.com/47cd5e11c2df49e7adff8631ae812b6bdd1501f77b72402598274c7325201003)|![](https://ai-studio-static-online.cdn.bcebos.com/dd482a4f00ed4f22b4d95fb9065b0f00ac2c6e797bda4d13b9a7584581b3bc80)|
 
 2).PINN with RAR
 
 |残差点数|  残差点图  | 物理场误差 | PDE残差 |
 | :--: | :-------: | :------: | :-----: |
-| 1500 |  ![](fig/Fig11_A.jpg)    |  ![](fig/pinn_rar/0err_u.jpg)   | ![](fig/pinn_rar/0err_eqs.jpg)  | 
-| 1600 |  ![](fig/pinn_rar/new_points9.jpg)   |  ![](fig/pinn_rar/9err_u.jpg)   | ![](fig/pinn_rar/9err_eqs.jpg)  | 
-| 1700 |  ![](fig/pinn_rar/new_points19.jpg)   |  ![](fig/pinn_rar/19err_u.jpg)   | ![](fig/pinn_rar/19err_eqs.jpg)  |
-| 1800 |  ![](fig/pinn_rar/new_points29.jpg)   |  ![](fig/pinn_rar/29err_u.jpg)   | ![](fig/pinn_rar/29err_eqs.jpg)  |
-| 1900 |  ![](fig/pinn_rar/new_points39.jpg)   |  ![](fig/pinn_rar/39err_u.jpg)   | ![](fig/pinn_rar/39err_eqs.jpg)  |
+| 1500 |![](https://ai-studio-static-online.cdn.bcebos.com/4e01981db4564f20b0447dffa9135d62829880c247444073be4f3cf6b90db219)|![](https://ai-studio-static-online.cdn.bcebos.com/a98828a4a9fd4ae48b38236461a1b0cb81bf2aea3fdb4c64a869494f3d46b21d)|![](https://ai-studio-static-online.cdn.bcebos.com/6dc97dee16ea4134a2371c5128d8c4c6894de4a84958496585bf0dd95e0c1a6a)|
+| 1600 |![](https://ai-studio-static-online.cdn.bcebos.com/d5d4c2a315fb41ccb5a5d2d153ab229ec2659571c5fb45ba9a2102c8b0295ea1)|![](https://ai-studio-static-online.cdn.bcebos.com/bf5d99350d414e4ebd095eaae30ea2ace75bf0a78f194cf583d26cffa55df8c4)|![](https://ai-studio-static-online.cdn.bcebos.com/7e77bd59a926477d89ddd987875b728a58fec7d1d9f546168f34de6099ac7e4b)|
+| 1700 |![](https://ai-studio-static-online.cdn.bcebos.com/a5c91d6a5b7145f780b3e23e2dd03f6cba9f9a412696444190edbf83938c4ba6)|![](https://ai-studio-static-online.cdn.bcebos.com/78091017da544518a7d8484220a1ef00c9dcde1cb7f34767a5ee5ab822a07d11)|![](https://ai-studio-static-online.cdn.bcebos.com/02696bd7ae464c3aa301b1828362a4f23ec18fe26c5941c38f5ca398da472d93)|
+| 1800 |![](https://ai-studio-static-online.cdn.bcebos.com/ba14da6a73f743c2a6aa09ffd94c2809bf51ffbdcaeb4326970bbe6cf02f1ce5)|![](https://ai-studio-static-online.cdn.bcebos.com/cf4e660436714aec8da1c287e2fc69567dad9fa15bc745f58f31dc2ca0d3fadf)|![](https://ai-studio-static-online.cdn.bcebos.com/1d8443f4efbf491986624a1b51d606aae6ea6568511f4330a4e2cb9032c4dfd3)|
+| 1900 |![](https://ai-studio-static-online.cdn.bcebos.com/736fcb35ebe648ca9d9a9cc14efe3f0b1bfe32161fde4ee4ac3a6ee482a07d00)|![](https://ai-studio-static-online.cdn.bcebos.com/a99a44ab8da04dfda03505a62571b4f8101c6a3d5cde41fc9ae07027fdf1f291)|![](https://ai-studio-static-online.cdn.bcebos.com/1f4d373157344535990af859725cfad7835d0b90344f45678702864f30f4e1bd)|
 
 论文结果为Fig 11
-![](fig/Fig11.jpg) 
+![](https://ai-studio-static-online.cdn.bcebos.com/86e5bccc13f94df69a056c607a94bd2bb8b66bd31d91407687ace9cc4111b677)
+
 
 3).GPINN with RAR
 
 |残差点数|  残差点图  | 物理场误差 | PDE残差 |
 | :--: | :-------: | :------: | :-----: |
-| 1500 |  ![](fig/Fig11_A.jpg)   |  ![](fig/gpinn_rar/0err_u.jpg)   | ![](fig/gpinn_rar/0err_eqs.jpg)  | 
-| 1600 |  ![](fig/gpinn_rar/new_points9.jpg)   |  ![](fig/gpinn_rar/9err_u.jpg)   | ![](fig/gpinn_rar/9err_eqs.jpg)  | 
-| 1700 |  ![](fig/gpinn_rar/new_points19.jpg)   |  ![](fig/gpinn_rar/19err_u.jpg)   | ![](fig/gpinn_rar/19err_eqs.jpg)  |
-| 1800 |  ![](fig/gpinn_rar/new_points29.jpg)   |  ![](fig/gpinn_rar/29err_u.jpg)   | ![](fig/gpinn_rar/29err_eqs.jpg)  |
-| 1900 |  ![](fig/gpinn_rar/new_points39.jpg)   |  ![](fig/gpinn_rar/39err_u.jpg)   | ![](fig/gpinn_rar/39err_eqs.jpg)  |
+| 1500 |![](https://ai-studio-static-online.cdn.bcebos.com/30a0ce803ad44cd3a5d2d6800cd99d4d77a0f47f9f254949bf2bfc5f899fb0b7)|![](https://ai-studio-static-online.cdn.bcebos.com/f6779261ec1242299cccee22dc9984c9643668bd997d4e659aadcca919e8a765)|![](https://ai-studio-static-online.cdn.bcebos.com/a308096727034e79b9a25980af616fd4d33e25ca1f52421cbbd3fd282e7aaeeb)|
+| 1600 |![](https://ai-studio-static-online.cdn.bcebos.com/9690ffd9c9be440a8ae9d892a11511d91401088a4a004104848d76f705f46111)|![](https://ai-studio-static-online.cdn.bcebos.com/c856d6644cc4444499fe939aaa00cae2c7ff27b7cb5e49958fa4095ed4feb680)|![](https://ai-studio-static-online.cdn.bcebos.com/0eb850bf28104177a2646a91bfddd53e5b3650d41e31441eb77c9236bfe05a10)|
+| 1700 |![](https://ai-studio-static-online.cdn.bcebos.com/ae6f0cc6c8bd426daad4733e318b4723ed098a972fb7412583d25b326a8fefb1)|![](https://ai-studio-static-online.cdn.bcebos.com/e702832e6380442db8eed13be54f99c89b771b31865e435a86c31916e57e1576)|![](https://ai-studio-static-online.cdn.bcebos.com/9233e0d3a7b14bd1ab48ebe7edf3e057027d1e1256b34e40b5d89fac5b79f221)|
+| 1800 |![](https://ai-studio-static-online.cdn.bcebos.com/2d6d08f274e74a8084a3be4b3559a97c2889b257d7114ffba2e4203b879ef96b)|![](https://ai-studio-static-online.cdn.bcebos.com/52f34c66601e46a48c914c0495841bbaba21e083c9b9457c9fbc763298fb34be)|![](https://ai-studio-static-online.cdn.bcebos.com/5b531cb1f09642feb8bd838c907dc9ba40f05412c3cf4d949ae5cf13f4227a39)|
+| 1900 | ![](https://ai-studio-static-online.cdn.bcebos.com/eae9fc7a372a492c862d0cb4a0d661bd695c420d46ec45fd9bb92eb56a64b5cd)|![](https://ai-studio-static-online.cdn.bcebos.com/44896176bc5a4b52bf86136c95383a42275509f679db4dc894550635048d8363)|![](https://ai-studio-static-online.cdn.bcebos.com/dd5e94201f654cf795cca5e25af98173ff66ebd6521444418b9377b4b033d734)|
 
 论文结果为Fig 12
-![](fig/Fig12.jpg) 
+![](https://ai-studio-static-online.cdn.bcebos.com/9a04af733dc64bffbabbe1605d679d2e9d2955198c6c4c93b04a6b76c64e6083)
+
 
 ## 6.存在问题
 
@@ -293,6 +291,7 @@ def equation(self, inn_var):
 ```
 
 
+
 ## 7.模型信息
 
 | 信息          | 说明                                                      |
@@ -303,4 +302,3 @@ def equation(self, inn_var):
 | 应用场景      | 科学计算                                                  |
 | 支持硬件      | CPU、GPU                                                  |
 | AI studio地址 | https://aistudio.baidu.com/aistudio/projectdetail/4493662 |
-
